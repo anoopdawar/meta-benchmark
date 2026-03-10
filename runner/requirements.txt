@@ -1,0 +1,4 @@
+# Runner dependencies — intentionally minimal (stdlib only for core functionality)
+# No third-party packages required for basic operation.
+# Optional: install pytest for running the test suites
+pytest>=8.0

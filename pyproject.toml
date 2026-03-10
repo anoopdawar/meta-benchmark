@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "meta-benchmark"
+version = "0.1.0"
+description = "Community standard harnesses for benchmarking AI coding agents"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+benchmark = "runner.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["runner*", "scorer*"]
+
+[tool.pytest.ini_options]
+testpaths = ["harnesses"]
+timeout = 120
