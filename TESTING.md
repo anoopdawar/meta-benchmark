@@ -1,20 +1,20 @@
 # Testing Guide
 
-A step-by-step walkthrough. No prior knowledge needed.
+Everything you need to try the benchmark, step by step. No prior knowledge required.
 
 ---
 
-## Setup (do this once)
+## One-time setup
 
 ```bash
+git clone https://github.com/anoopdawar/meta-benchmark
 cd meta-benchmark
 
-# Install the benchmark CLI and test dependencies
 pip install -e .
-pip install pytest pytest-timeout pytest-json-report
+pip install pytest pytest-timeout pytest-json-report "mutmut<3"
 ```
 
-Verify it works:
+Check it works:
 
 ```bash
 python -m runner.cli list-harnesses
@@ -24,169 +24,167 @@ python -m runner.cli list-harnesses
 
 ---
 
-## Step 1: Look at what agents are asked to build
+## Step 1: Read the prompt agents receive
 
 ```bash
 cat harnesses/mini-git/prompt.md
 ```
 
-This is the *exact* prompt agents receive. One page. No hints about the test suite. From this, agents must produce a working git implementation.
+This is the *exact* prompt. One page. No hints about the test suite or scoring. From this single prompt, agents must produce a working git implementation.
 
 ---
 
-## Step 2: Run the tests against the included Claude submission
+## Step 2: Run the test suite against the included Claude submission
 
-There's a real Claude-generated mini-git already in `submissions/`. Let's run the tests against it:
+A real Claude-generated mini-git lives in `submissions/`. Run the harness tests against it:
 
 ```bash
 export MINI_GIT_CMD="python submissions/mini-git-claude-opus-4-6-live/workspace/mini_git.py"
 
-# Tier 1: init, add, commit, log, status
-python -m pytest harnesses/mini-git/tests/tier1/ -v --tb=short
-
-# Tier 2: branch, checkout, merge, diff
-python -m pytest harnesses/mini-git/tests/tier2/ -v --tb=short
-
-# Tier 3: merge conflicts, reset, stash
-python -m pytest harnesses/mini-git/tests/tier3/ -v --tb=short
+python -m pytest harnesses/mini-git/tests/tier1/ -v   # init, add, commit, log, status
+python -m pytest harnesses/mini-git/tests/tier2/ -v   # branch, checkout, merge, diff
+python -m pytest harnesses/mini-git/tests/tier3/ -v   # conflicts, reset, stash
 ```
 
-Expected output for tier1:
-```
-34 passed in ~20s
-```
-
-Run everything at once:
-```bash
-python -m pytest harnesses/mini-git/tests/tier1/ harnesses/mini-git/tests/tier2/ harnesses/mini-git/tests/tier3/ -q
-# 70 passed, 2 failed in ~60s
-```
+Expected: ~70 of 72 behavioral tests pass. The implementation is real — it uses SHA1 object storage, zlib compression, and a proper staging index.
 
 ---
 
-## Step 3: Run the full scorer against that submission
+## Step 3: Score the submission
 
-This runs all 7 scoring dimensions and produces a JSON scorecard:
+Run all 7 scoring dimensions at once:
 
 ```bash
 python -m scorer.scorecard \
   --submission submissions/mini-git-claude-opus-4-6-live \
   --harness mini-git \
-  --output /tmp/scorecard.json \
   --dry-run
 ```
 
-`--dry-run` skips the LLM judge API calls. You'll see:
+`--dry-run` skips the LLM judge API call. You'll see output like:
 
 ```
 Running behavioral tests...
   Functional: 96.8/100 (70/72 tests)
 Running adversarial tests...
-  Adversarial: 87.7/100 (136/155 survived)
+  [held-out] 10/11 additional adversarial tests passed
+  Adversarial: 88.0/100 (146/166 survived)
 Running extension tests...
   Extension: 25.0/100 (4/16)
 Running mutation testing...
-  Mutation: 0.0/100 (unavailable)
+  Mutation: 100.0/100 (mutmut)
 Running performance benchmarks...
-  Performance: 35.1/100
+  Performance: 35.4/100
 Running reliability tests...
   Reliability: 71.4/100 (10/14)
 Running LLM judge...
   Quality: 0.0/100 (dry_run=True)
 
-Total score: 66.4/100
-```
-
-The JSON scorecard:
-```bash
-cat /tmp/scorecard.json | python -m json.tool | head -40
+Total score: 67.2/100
 ```
 
 ---
 
-## Step 4: Open the leaderboard
+## Step 4: Understand the held-out tests
+
+You'll notice `[held-out] 10/11 additional adversarial tests passed` in the output above. This is the private test mechanism working.
+
+`harnesses/mini-git/tests/held-out/` is **gitignored** — it doesn't appear in the public repo. But the directory exists in your local clone after you run the setup. The scorer finds it automatically and includes those tests in the adversarial score.
+
+Entries scored with held-out tests are marked `"verified": true` in the scorecard JSON:
 
 ```bash
-cd leaderboard
-python -m http.server 8080
-# open http://localhost:8080 in a browser
+python -m json.tool submissions/mini-git-claude-opus-4-6-live/scorecard.json \
+  | grep -A5 '"adversarial"'
+# "verified": true,
+# "held_out_passed": 10,
+# "held_out_total": 11,
 ```
 
-> **Must be served via HTTP** — opening `index.html` directly as a file won't work.
-
-You'll see two real runs: claude-opus-4-6 (62.5) and gemini-2.5-flash (7.3). Click any row for the full scorecard breakdown.
+To add your own held-out tests: create `harnesses/mini-git/tests/held-out/test_*.py`. They run automatically next time you score.
 
 ---
 
-## Step 5: Run a fresh benchmark against a model (requires API key)
+## Step 5: Check mutation testing
 
-This calls the model API, has it generate a mini-git from scratch, then scores the output.
-
-### For Claude (Anthropic):
+The mutation scorer runs `mutmut` against the agent's own test files. It asks: do the agent's tests actually catch bugs?
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # from console.anthropic.com/settings/keys
+# See mutmut run standalone
+cd submissions/mini-git-claude-opus-4-6-live/workspace
+cat > setup.cfg << 'EOF'
+[mutmut]
+paths_to_mutate=mini_git.py
+tests_dir=.
+EOF
+mutmut run
+# then check: mutants/mini_git.py.meta
+```
+
+The scorer does this automatically — the 100% kill rate in Step 3 means every mutant was caught.
+
+---
+
+## Step 6: Open the leaderboard
+
+```bash
+cd leaderboard && python -m http.server 8080
+# open http://localhost:8080
+```
+
+> Must be served via HTTP — opening the HTML file directly won't load the data.
+
+Click any row to drill into the full scorecard: tier breakdown, adversarial survival detail, performance latency per benchmark, and judge dimension scores.
+
+---
+
+## Step 7: Run a fresh benchmark against a model
+
+This calls the model API, has it generate a mini-git implementation from scratch, scores it, and updates the leaderboard.
+
+### Anthropic (Claude):
+
+```bash
+# Real key from console.anthropic.com/settings/keys
+export ANTHROPIC_API_KEY=sk-ant-...
+
 python run_benchmark.py --models claude-opus-4-6 --dry-run
 ```
 
-> The key injected by Claude Code itself (`$ANTHROPIC_API_KEY` in a Claude Code session) is a session token and **will return 401**. You need a separate key from the Anthropic console.
+> The `ANTHROPIC_API_KEY` inside a Claude Code session is a session token — it returns 401 for direct API calls. You need a separate key from the console.
 
-### For Gemini:
+### Google (Gemini):
 
 ```bash
 pip install google-genai
-export GEMINI_API_KEY=...   # from aistudio.google.com → Get API key
+export GEMINI_API_KEY=...   # aistudio.google.com → Get API key
+
 python run_benchmark.py --models gemini-2.5-flash --dry-run
 ```
 
+> `gemini-2.5-pro` requires a paid tier. `gemini-2.5-flash` works on the free tier.
+
 ### What happens:
 
-1. A clean workspace is created under `submissions/`
-2. The model receives `harnesses/mini-git/prompt.md`
-3. The model generates code (~3–6 minutes for claude-opus-4-6, ~5 minutes for gemini-2.5-flash)
-4. The full scorer runs against the output
-5. Results are written to `submissions/<run>/scorecard.json`
-6. `leaderboard/data/runs.json` is updated
+1. A workspace is created under `submissions/`
+2. The model receives `harnesses/mini-git/prompt.md` — nothing else
+3. The model generates code (~3–6 min for Claude opus, ~5 min for Gemini flash)
+4. All 7 scorers run against the output
+5. Results written to `submissions/<run>/scorecard.json`
+6. `leaderboard/data/runs.json` updated automatically
 
-Output looks like:
-```
-============================================================
-  Model:  claude-opus-4-6
-  Agent:  claude-api
-  Output: submissions/mini-git-claude-opus-4-6-20260310T191557Z
-============================================================
-
-  Calling claude-opus-4-6 via Anthropic API (streaming)...
-  API call complete in 282.3s
-  Files written: 5
-    README.md
-    requirements.txt
-    mini_git.py
-    ...
-
-  Duration:  283.0s
-  Tokens:    1,822 in / 26,492 out
-  Est. cost: $2.01
-
-Scoring claude-opus-4-6...
-  Functional: 91.0/100 (66/72 tests)
-  ...
-
-Total score: 62.5/100
-```
-
-`--dry-run` skips the LLM judge API calls (saves money while you're testing the pipeline). Remove it for a full score.
+Remove `--dry-run` to also run the LLM judge (costs a small amount per run).
 
 ---
 
-## Step 6: Score a manual submission
+## Step 8: Score a manual submission
 
-Have output from Cursor, Copilot, Devin, or any other tool? Structure it like this:
+Output from Cursor, Copilot, Devin, a raw API call, anything:
 
 ```bash
 mkdir -p submissions/my-run/workspace
 
-# Copy the agent's generated code
+# Copy the generated code
 cp -r /path/to/generated/code/* submissions/my-run/workspace/
 
 # Write metadata
@@ -214,47 +212,33 @@ python -m scorer.scorecard \
   --dry-run
 ```
 
-The scorer will look for the implementation at `workspace/mini_git.py`, `workspace/mini_git/__main__.py`, or `workspace/src/mini_git.py`.
+The scorer discovers the implementation at `workspace/mini_git.py`, `workspace/mini_git/__main__.py`, or `workspace/src/mini_git.py`.
 
 ---
 
-## Step 7: Run the LLM judge (requires API key)
-
-The quality score is 0 in dry-run mode. To get a real quality score:
-
-```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-
-python -m scorer.scorecard \
-  --submission submissions/mini-git-claude-opus-4-6-live \
-  --harness mini-git
-# (no --dry-run)
-```
-
-The judge evaluates: plumbing/porcelain separation, object model quality, naming consistency, test quality, scope discipline.
-
----
-
-## Run individual test categories
+## Run any test category standalone
 
 ```bash
 export MINI_GIT_CMD="python /path/to/mini_git.py"
 
-# Adversarial: unicode, binary files, corrupt objects, edge cases
+# Adversarial: unicode filenames, binary files, corrupt objects, 100k+ files
 python -m pytest harnesses/mini-git/tests/adversarial/ -v --tb=short
 
-# Extension: remote operations (add/push/pull)
+# Extension: remote add/push/pull/fetch
 python -m pytest harnesses/mini-git/tests/extension/ -v --tb=short
 
-# Reliability: mid-commit SIGKILL, concurrent writes, disk full
+# Reliability: mid-commit kill, concurrent writes, disk full, corrupt store
 python -m pytest harnesses/mini-git/tests/reliability/ -v --tb=short
 
-# Count all collectible tests
-python -m pytest harnesses/mini-git/tests/ --collect-only -q | tail -3
-# ~257 tests collected
-```
+# Performance benchmarks: 10k commits, 100k files, 1k diffs
+python -m pytest harnesses/mini-git/tests/performance/ -v --tb=short
 
-Tests skip cleanly if the implementation doesn't support the command — you won't get floods of confusing errors.
+# Held-out tests (if you have them locally)
+python -m pytest harnesses/mini-git/tests/held-out/ -v --tb=short
+
+# Everything at once
+python -m pytest harnesses/mini-git/tests/ -q
+```
 
 ---
 
@@ -266,48 +250,53 @@ pip install -e .
 # or use: python -m runner.cli
 ```
 
-**`--timeout` unrecognized argument**
+**Tests all skipping**
+```bash
+echo $MINI_GIT_CMD              # must be set
+python $MINI_GIT_CMD init       # verify it runs
+```
+
+**`--timeout` unrecognized**
 ```bash
 pip install pytest-timeout
 ```
 
-**`--json-report` unrecognized argument**
+**`--json-report` unrecognized**
 ```bash
 pip install pytest-json-report
 ```
 
-**Tests all skipping (0 collected or all skip)**
+**Mutation always 0 / `mutmut: command not found`**
 ```bash
-echo $MINI_GIT_CMD    # must be set
-python $MINI_GIT_CMD init   # verify it actually runs
+pip install "mutmut<3"   # mutmut 3.x has a different API; use 2.x
 ```
 
-**`google-genai` not installed**
+**`google-genai` import error**
 ```bash
 pip install google-genai
 ```
 
-**Anthropic 401 error**
-The `ANTHROPIC_API_KEY` from a Claude Code session is a session token — it only works inside Claude Code, not for direct API calls. Get a real key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys).
+**Anthropic 401**
+The `ANTHROPIC_API_KEY` from Claude Code is a session token, not an API key. Get a real key at [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys).
 
 **Gemini 429 quota exceeded**
-`gemini-2.5-pro` requires a paid tier. Use `gemini-2.5-flash` on the free tier:
+`gemini-2.5-pro` requires a paid tier. Switch to `gemini-2.5-flash`:
 ```bash
 python run_benchmark.py --models gemini-2.5-flash --dry-run
 ```
 
-**Scorer shows 0/72 even though my code runs**
-Run from the project root (`meta-benchmark/`), not from inside a subdirectory:
+**Scorer shows 0/72 behavioral tests**
+Run from the project root, not a subdirectory:
 ```bash
-cd meta-benchmark
+cd meta-benchmark   # ← must be here
 python -m scorer.scorecard --submission submissions/my-run --harness mini-git --dry-run
 ```
 
 **Leaderboard shows "Failed to load data"**
-Must be served via HTTP, not opened as a local file:
+Must be served via HTTP:
 ```bash
 cd leaderboard && python -m http.server 8080
-# then open http://localhost:8080
+# open http://localhost:8080  (not file:///...)
 ```
 
 ---
@@ -316,8 +305,10 @@ cd leaderboard && python -m http.server 8080
 
 | Score | What it means |
 |-------|---------------|
-| 85–100 | Near-perfect. All tiers pass, adversarial handled, clean architecture. |
+| 85–100 | Near-perfect. All tiers, adversarial handled, clean tests, fast. |
 | 70–85 | Strong. Core + branching solid, most edge cases handled. |
-| 55–70 | Competent. All commands present, some edge cases failing. (Claude opus-4-6: 62.5) |
+| 55–70 | Competent. All commands present, some edge cases and perf gaps. **(Claude opus-4-6: 67.2)** |
 | 30–55 | Partial. Tier 1 works, Tier 2 rough, Tier 3 gaps. |
-| < 30 | Broken. Core implementation bug stops most tests. (Gemini 2.5-flash: 7.3) |
+| < 30 | Broken. Core implementation bug stops most tests. **(Gemini 2.5-flash: 7.3)** |
+
+The gap between Claude and Gemini isn't about the harness being hard — it's that Gemini's generated code had a struct packing bug (`'I' format requires 0 <= number <= 4294967295`) that crashed on `git add`. The harness caught a real flaw in the generated code.

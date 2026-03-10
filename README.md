@@ -18,7 +18,7 @@ This is the [CSS Zen Garden](https://csszengarden.com/) for AI coding agents.
 
 A standardized application harness defines *what to build* — a fixed canvas. Agents build against it. Their output is scored on dimensions that actually matter. Results are public and reproducible.
 
-> "claude-opus-4-6 built mini-git with 91% functional completeness, survived 87% of adversarial edge cases, 12/14 reliability scenarios, and cost $2.01 in 283 seconds."
+> "claude-opus-4-6 built mini-git with 97% functional completeness, 88% adversarial survival, 100% mutation kill rate on its own tests, and 71% reliability — verified including private held-out tests not in this repo."
 
 That's a precise, reproducible claim. You can verify it. You can compare it. You can beat it.
 
@@ -42,30 +42,30 @@ A from-scratch implementation of git — content-addressable object storage, sta
 
 ## Scoring
 
-Seven dimensions, all automatable except code quality:
+Seven dimensions, all automated:
 
 | Dimension | Weight | How |
 |-----------|--------|-----|
-| Functional completeness | 35%\* | 72 behavioral tests (pytest, black-box) |
-| Adversarial survival | 20%\* | 155 edge cases — unicode filenames, binary files, corrupt objects, 100k+ files |
-| Extension readiness | 10% | Did the first response include remote operations? (push/pull/fetch tests) |
-| Mutation kill rate | 10% | Does the agent's own test suite actually verify its logic? (requires mutmut) |
-| Performance | 15% | p95 latency on `git log` (10k commits), `git add` (100k files), `git diff` (1k changes) |
+| Functional completeness | 30% | 72 behavioral tests across 3 tiers (pytest, black-box) |
+| Adversarial survival | 15% | 155 public + private held-out edge cases |
+| Extension readiness | 10% | Did the implementation include remote operations (push/pull/fetch)? |
+| Mutation kill rate | 10% | Does the agent's own test suite catch code mutations? (mutmut) |
+| Performance | 15% | p95 latency: `git log` on 10k commits, `git add` on 100k files, `git diff` on 1k changes |
 | Reliability | 10% | SIGKILL mid-commit, concurrent writes, disk-full, corrupt object store |
 | Code quality | 10% | Multi-model LLM judge, calibrated against human expert scores |
-
-\* *Mutation kill rate weight (10%) is redistributed equally to functional + adversarial when mutation tooling is unavailable.*
 
 **Output:** A structured JSON scorecard + human-readable report. All runs are public.
 
 ## Real results
 
-These are actual API calls, actual generated code, actual test runs:
+Both scores are from actual API calls, actual generated code, actual test runs — including private held-out tests run by the maintainer:
 
-| Model | Score | Functional | Adversarial | Reliability | Cost |
-|-------|-------|-----------|-------------|-------------|------|
-| claude-opus-4-6 | **62.5/100** | 66/72 (91%) | 136/155 (88%) | 12/14 (86%) | $2.01 |
-| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | 0/14 (0%) | $0.02 |
+| Model | Score | Functional | Adversarial | Mutation | Reliability | Cost |
+|-------|-------|-----------|-------------|----------|-------------|------|
+| claude-opus-4-6 | **67.2/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill rate | 10/14 (71%) | $2.01 |
+| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | — | 0/14 (0%) | $0.02 |
+
+✓ = scored with private held-out tests included
 
 Gemini's 0% functional score isn't an infrastructure failure — its generated code has a struct packing bug that crashes on `git add`. The harness caught a real flaw.
 
@@ -79,12 +79,13 @@ meta-benchmark/
       prompt.md        ← The single seed prompt the agent receives
       rubric.md        ← Scoring dimensions and weights
       tests/
-        tier1/         ← init, add, commit, log, status  (34 tests)
-        tier2/         ← branch, checkout, merge, diff   (22 tests)
-        tier3/         ← merge conflicts, reset, stash   (16 tests)
-        adversarial/   ← 155 edge cases
-        extension/     ← remote operations (second prompt)
-        performance/   ← latency benchmarks
+        tier1/         ← init, add, commit, log, status   (34 tests)
+        tier2/         ← branch, checkout, merge, diff    (22 tests)
+        tier3/         ← merge conflicts, reset, stash    (16 tests)
+        adversarial/   ← 155 public edge cases
+        held-out/      ← gitignored, maintainer-only tests (anti-Goodhart)
+        extension/     ← remote operations tests
+        performance/   ← latency benchmarks with thresholds
         reliability/   ← chaos scenarios
       judge/
         rubric.md      ← LLM judge qualitative rubric
@@ -92,101 +93,114 @@ meta-benchmark/
   runner/
     cli.py             ← benchmark run / score / list-harnesses
     agents/
-      anthropic_api.py ← Direct Anthropic API agent
-      gemini_api.py    ← Direct Gemini API agent
+      anthropic_api.py ← Direct Anthropic API agent (claude-opus-4-6, sonnet, etc.)
+      gemini_api.py    ← Direct Gemini API agent (gemini-2.5-flash, pro, etc.)
       claude_code.py   ← Claude Code subprocess integration
-      README.md        ← Manual submission format (for Cursor, Devin, etc.)
+      README.md        ← Manual submission format (Cursor, Devin, Copilot, etc.)
   scorer/
-    behavioral.py      ← Runs tier 1-3 tests
-    adversarial.py     ← Runs edge case battery
-    extension.py       ← Runs extension tests
-    mutation.py        ← Mutation testing (mutmut / cosmic-ray)
+    behavioral.py      ← Tier 1-3 behavioral tests
+    adversarial.py     ← Public + held-out edge cases
+    extension.py       ← Remote operations tests
+    mutation.py        ← Mutation testing via mutmut
     performance.py     ← Latency benchmarks
     reliability.py     ← Chaos scenarios
-    judge.py           ← Multi-model LLM judge
+    judge.py           ← Multi-model LLM judge (3 models, calibration anchoring)
     scorecard.py       ← Aggregates everything → JSON
   leaderboard/
     index.html         ← Static leaderboard site (no build step)
     data/runs.json     ← All public runs
-  run_benchmark.py     ← Run one or both models end-to-end
-  submissions/         ← All agent outputs + scorecards live here
+  run_benchmark.py     ← Orchestrates full model runs end-to-end
+  submissions/         ← Agent outputs + scorecards (gitignored)
 ```
 
 ## Quickstart
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/anoopdawar/meta-benchmark
 cd meta-benchmark
 pip install -e .
-pip install pytest pytest-timeout pytest-json-report
+pip install pytest pytest-timeout pytest-json-report "mutmut<3"
 
-# Explore what agents are asked to build
+# See what agents are asked to build
 cat harnesses/mini-git/prompt.md
 
 # Run the test suite against the included Claude submission
 export MINI_GIT_CMD="python submissions/mini-git-claude-opus-4-6-live/workspace/mini_git.py"
 python -m pytest harnesses/mini-git/tests/tier1/ -v
 
-# Run a full benchmark against a model (requires API key)
-export ANTHROPIC_API_KEY=sk-ant-...   # real key from console.anthropic.com
-python run_benchmark.py --models claude-opus-4-6 --dry-run
-
-# Score any submission
+# Score it
 python -m scorer.scorecard \
   --submission submissions/mini-git-claude-opus-4-6-live \
   --harness mini-git \
   --dry-run
 
+# Run a fresh benchmark (requires API key)
+export ANTHROPIC_API_KEY=sk-ant-...
+python run_benchmark.py --models claude-opus-4-6 --dry-run
+
 # View the leaderboard
 cd leaderboard && python -m http.server 8080
-# open http://localhost:8080
 ```
 
-See [TESTING.md](TESTING.md) for a step-by-step walkthrough from zero.
+See [TESTING.md](TESTING.md) for a complete step-by-step walkthrough.
 
 ## API keys
 
-| Model | Key var | Where to get it |
-|-------|---------|-----------------|
-| claude-opus-4-6, claude-sonnet-4-6 | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
-| gemini-2.5-flash, gemini-2.5-pro | `GEMINI_API_KEY` | aistudio.google.com → Get API key |
+| Model | Environment variable | Where to get it |
+|-------|---------------------|-----------------|
+| claude-opus-4-6, claude-sonnet-4-6, etc. | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
+| gemini-2.5-flash, gemini-2.5-pro, etc. | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API key |
 
-> **Note:** The `ANTHROPIC_API_KEY` injected by Claude Code itself is a session token and will return 401 if used for direct API calls. You need a separate key from the Anthropic console.
+> **Note:** The `ANTHROPIC_API_KEY` in a Claude Code session is an internal session token. It returns 401 for direct API calls. You need a separate key from the Anthropic console.
 
 ## Anti-Goodhart measures
 
-Benchmarks rot when they become training targets.
+Benchmarks rot when they become training targets. These are real, implemented countermeasures — not aspirations.
 
-1. **Private held-out tests** — `harnesses/mini-git/tests/held-out/` is gitignored and never published. The adversarial scorer automatically includes these tests when they exist locally. Leaderboard entries scored by a maintainer are marked `verified: true` in the scorecard. Community self-scores run only against public tests. To run held-out tests: clone the repo, add your own tests to that directory, and score.
+**1. Private held-out tests**
 
-2. **Harness versioning** — Each harness has a `harness_version` field. When requirements change, the version increments and old scores are not comparable to new ones. The leaderboard filters by version. (Currently v1.0.0 — versioning infrastructure is in place; v2 requirements are not yet written.)
+`harnesses/mini-git/tests/held-out/` is gitignored. It never appears in the public repo. The adversarial scorer checks for this directory automatically — if it exists, those tests run and count toward the score. Leaderboard entries scored by a maintainer are marked `verified: true` in the scorecard JSON.
 
-3. **Harness velocity** — The community grows the harness library faster than any model can be fine-tuned against it. One harness is a benchmark. Ten harnesses is a standard.
+Anyone can add their own held-out tests locally. The scoring infrastructure handles it automatically.
+
+**2. Harness versioning**
+
+Each harness has a `harness_version` field. The leaderboard filters by version. When requirements change, the version increments and old scores are not comparable. Currently v1.0.0.
+
+**3. Harness velocity**
+
+One harness is a benchmark. Ten harnesses is a standard. The community adds harnesses faster than models can be tuned against any one of them. See *Contributing harnesses* below.
 
 ## Submitting a run
 
 Any agent, any framework. If you can produce code, you can submit.
 
 ```bash
-# Via the benchmark runner (Claude or Gemini API)
+# Via the benchmark runner (Anthropic or Gemini API)
 python run_benchmark.py --models claude-opus-4-6
 
-# Manual (Cursor, Devin, Copilot, raw API, etc.)
-# → See runner/agents/README.md for the submission format
+# Manual submission (Cursor, Devin, Copilot, raw API, etc.)
+# → See runner/agents/README.md for the metadata.json format
 ```
 
-To add your run to the leaderboard, open a PR with your `metadata.json` and `scorecard.json`.
+To add your run to the public leaderboard, open a PR adding your `metadata.json` and `scorecard.json` under `submissions/<your-run>/`.
 
 ## Contributing harnesses
 
 A harness is a directory under `harnesses/` with:
-- `spec.md` — What to build
-- `prompt.md` — The seed prompt
-- `rubric.md` — Scoring dimensions and weights
-- `tests/` — The test suite
-- `judge/rubric.md` — LLM judge rubric
 
-Good harness candidates: a compiler for a simple language, a key-value store with persistence, a job queue with retry logic, a diff/patch tool, a CSV query engine. The pattern: **non-trivial, well-specified, testable**.
+```
+harnesses/your-harness/
+  spec.md          ← What to build (the PRD)
+  prompt.md        ← The seed prompt agents receive
+  rubric.md        ← Scoring dimensions and weights
+  tests/           ← Automated test suite
+  judge/rubric.md  ← LLM judge rubric
+```
+
+Good harness candidates: a compiler for a simple language, a key-value store with persistence, a job queue with retry logic, a diff/patch tool, a CSV query engine.
+
+The pattern: **non-trivial, well-specified, deterministically testable**.
 
 See [harnesses/mini-git/](harnesses/mini-git/) as the reference implementation.
 
@@ -194,11 +208,12 @@ See [harnesses/mini-git/](harnesses/mini-git/) as the reference implementation.
 
 ```bash
 cd leaderboard && python -m http.server 8080
+# open http://localhost:8080
 ```
 
-Open `http://localhost:8080`. Sortable by any dimension. Filter by model, framework, harness version. Drill into any run for full scorecard detail.
+Sortable by any dimension. Filter by model, framework, and harness version. Drill into any run for the full scorecard — tier breakdown, adversarial detail, performance latency, judge dimension scores.
 
-The leaderboard currently shows two real runs (claude-opus-4-6 and gemini-2.5-flash). Add yours.
+Currently showing two real runs. Add yours.
 
 ---
 
