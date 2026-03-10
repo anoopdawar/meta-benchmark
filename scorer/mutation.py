@@ -1,7 +1,7 @@
 """
 Mutation scorer — measures how well the agent's own tests catch code mutations.
 
-Uses mutmut (preferred) or cosmic-ray. Falls back gracefully if no tests exist.
+Uses mutmut 2.5+. Falls back gracefully if mutmut is not installed or no tests exist.
 
 Mutation kill rate = (mutations killed) / (total mutations) * 100
 A high kill rate means the tests actually verify the implementation's logic.
@@ -26,7 +26,7 @@ class MutationResult:
     total: int
     kill_rate: float  # 0-100
     score: float  # 0-100
-    method: str  # "mutmut", "cosmic_ray", or "unavailable"
+    method: str  # "mutmut" or "unavailable"
     notes: str = ""
 
 
@@ -39,8 +39,8 @@ def run_mutation(
     """
     Run mutation testing against the agent's implementation and its own tests.
 
-    Tries mutmut first, then cosmic-ray. Falls back to a no-op result if
-    no tests are found in the submission.
+    Uses mutmut 2.5+. Falls back to a zero result if mutmut is not installed
+    or no test files are found in the submission.
     """
     submission_path = Path(submission_path)
     workspace = submission_path / "workspace"
@@ -51,62 +51,68 @@ def run_mutation(
         return MutationResult(
             killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
             method="unavailable",
-            notes="No test files found in submission workspace. Mutation score is 0.",
+            notes="No test files found in submission workspace.",
         )
 
-    # Try mutmut
-    if shutil.which("mutmut"):
-        return _run_mutmut(workspace, python, timeout, max_mutations)
+    if not shutil.which("mutmut"):
+        return MutationResult(
+            killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
+            method="unavailable",
+            notes="mutmut not installed. Run: pip install 'mutmut<3'",
+        )
 
-    # Try cosmic-ray
-    if shutil.which("cosmic-ray") or shutil.which("cr"):
-        return _run_cosmic_ray(workspace, python, timeout, max_mutations)
-
-    return MutationResult(
-        killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
-        method="unavailable",
-        notes="Neither mutmut nor cosmic-ray found. Install one to enable mutation scoring.",
-    )
+    return _run_mutmut(workspace, python, timeout, max_mutations)
 
 
 def _run_mutmut(workspace: Path, python: str, timeout: int, max_mutations: int) -> MutationResult:
-    """Run mutmut and parse results."""
+    """Run mutmut 2.5+ and parse results from mutants/*.meta files."""
     # Find source files (exclude tests)
     src_files = [
-        str(p) for p in workspace.rglob("*.py")
-        if "test" not in p.name.lower() and p.is_file()
+        p.name for p in workspace.glob("*.py")
+        if "test" not in p.name.lower()
     ]
+    # Also handle package layouts
+    for pkg in workspace.iterdir():
+        if pkg.is_dir() and (pkg / "__init__.py").exists() and "test" not in pkg.name.lower():
+            src_files.append(pkg.name)
+
     if not src_files:
         return MutationResult(
             killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
             method="mutmut",
-            notes="No source files found (only test files present).",
+            notes="No source files found to mutate.",
         )
 
+    paths_to_mutate = ",".join(src_files)
+
+    # Write setup.cfg for mutmut config (mutmut 2.5 reads from setup.cfg)
+    setup_cfg = workspace / "setup.cfg"
+    wrote_config = False
+    if not setup_cfg.exists():
+        setup_cfg.write_text(
+            f"[mutmut]\npaths_to_mutate={paths_to_mutate}\ntests_dir=.\n",
+            encoding="utf-8",
+        )
+        wrote_config = True
+
     try:
-        # Run mutmut
         result = subprocess.run(
-            ["mutmut", "run", f"--paths-to-mutate={','.join(src_files)}"],
+            ["mutmut", "run"],
             cwd=str(workspace),
-            capture_output=True, text=True, timeout=timeout,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
             env={**os.environ, "PYTHONPATH": str(workspace)},
         )
 
-        # Get results
-        results_proc = subprocess.run(
-            ["mutmut", "results"],
-            cwd=str(workspace),
-            capture_output=True, text=True, timeout=30,
-        )
-
-        killed = _count_in_output(results_proc.stdout, "killed")
-        survived = _count_in_output(results_proc.stdout, "survived")
+        killed, survived = _parse_mutmut_results(workspace)
         total = killed + survived
 
         kill_rate = (killed / total * 100) if total > 0 else 0.0
         return MutationResult(
             killed=killed, survived=survived, total=total,
-            kill_rate=round(kill_rate, 2), score=round(kill_rate, 2),
+            kill_rate=round(kill_rate, 2),
+            score=round(kill_rate, 2),
             method="mutmut",
         )
     except subprocess.TimeoutExpired:
@@ -119,24 +125,37 @@ def _run_mutmut(workspace: Path, python: str, timeout: int, max_mutations: int) 
             killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
             method="mutmut", notes=f"mutmut error: {e}",
         )
+    finally:
+        if wrote_config and setup_cfg.exists():
+            setup_cfg.unlink()
 
 
-def _run_cosmic_ray(workspace: Path, python: str, timeout: int, max_mutations: int) -> MutationResult:
-    """Run cosmic-ray and parse results. Stub — returns unavailable if config not ready."""
-    return MutationResult(
-        killed=0, survived=0, total=0, kill_rate=0.0, score=0.0,
-        method="cosmic_ray",
-        notes="cosmic-ray integration not yet configured. Run mutmut for mutation scoring.",
-    )
+def _parse_mutmut_results(workspace: Path) -> tuple[int, int]:
+    """
+    Parse mutmut 2.5+ results from mutants/*.meta JSON files.
 
+    In mutmut 2.5+, each source file gets a .meta file under mutants/ with:
+      exit_code_by_key: {mutant_key: exit_code}
+    exit_code = 1 → test suite caught the mutation (killed ✅)
+    exit_code = 0 → mutation survived (test suite missed it ❌)
+    """
+    mutants_dir = workspace / "mutants"
+    if not mutants_dir.exists():
+        return 0, 0
 
-def _count_in_output(text: str, keyword: str) -> int:
-    """Count occurrences of lines containing a keyword with a leading number."""
-    import re
-    total = 0
-    for line in text.splitlines():
-        if keyword in line.lower():
-            match = re.search(r"(\d+)", line)
-            if match:
-                total += int(match.group(1))
-    return total
+    killed = 0
+    survived = 0
+
+    for meta_file in mutants_dir.rglob("*.meta"):
+        try:
+            data = json.loads(meta_file.read_text(encoding="utf-8"))
+            exit_codes = data.get("exit_code_by_key", {})
+            for key, code in exit_codes.items():
+                if code != 0:
+                    killed += 1
+                else:
+                    survived += 1
+        except (json.JSONDecodeError, OSError):
+            continue
+
+    return killed, survived

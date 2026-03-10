@@ -48,8 +48,8 @@ Seven dimensions, all automatable except code quality:
 |-----------|--------|-----|
 | Functional completeness | 35%\* | 72 behavioral tests (pytest, black-box) |
 | Adversarial survival | 20%\* | 155 edge cases — unicode filenames, binary files, corrupt objects, 100k+ files |
-| Extension readiness | 10% | Second prompt: "now add remotes" — tests run again |
-| Mutation kill rate | 10% | Does the agent's own test suite actually verify its logic? |
+| Extension readiness | 10% | Did the first response include remote operations? (push/pull/fetch tests) |
+| Mutation kill rate | 10% | Does the agent's own test suite actually verify its logic? (requires mutmut) |
 | Performance | 15% | p95 latency on `git log` (10k commits), `git add` (100k files), `git diff` (1k changes) |
 | Reliability | 10% | SIGKILL mid-commit, concurrent writes, disk-full, corrupt object store |
 | Code quality | 10% | Multi-model LLM judge, calibrated against human expert scores |
@@ -157,9 +157,11 @@ See [TESTING.md](TESTING.md) for a step-by-step walkthrough from zero.
 
 Benchmarks rot when they become training targets.
 
-1. **Private held-out tests** — A meaningful slice of adversarial + reliability tests is never published. Scores on the leaderboard include held-out test performance, verified by maintainers.
-2. **Harness versioning** — v1, v2, v3. New requirements with each version. Old scores don't carry forward.
-3. **Harness velocity** — The community grows the harness library faster than any model can be fine-tuned against it.
+1. **Private held-out tests** — `harnesses/mini-git/tests/held-out/` is gitignored and never published. The adversarial scorer automatically includes these tests when they exist locally. Leaderboard entries scored by a maintainer are marked `verified: true` in the scorecard. Community self-scores run only against public tests. To run held-out tests: clone the repo, add your own tests to that directory, and score.
+
+2. **Harness versioning** — Each harness has a `harness_version` field. When requirements change, the version increments and old scores are not comparable to new ones. The leaderboard filters by version. (Currently v1.0.0 — versioning infrastructure is in place; v2 requirements are not yet written.)
+
+3. **Harness velocity** — The community grows the harness library faster than any model can be fine-tuned against it. One harness is a benchmark. Ten harnesses is a standard.
 
 ## Submitting a run
 

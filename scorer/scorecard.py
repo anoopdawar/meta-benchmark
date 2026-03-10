@@ -177,9 +177,13 @@ def build_scorecard(
                 "passed": adversarial.passed,
                 "total": adversarial.total,
                 "survival_rate": adversarial.survival_rate,
+                "held_out_passed": adversarial.held_out_passed,
+                "held_out_total": adversarial.held_out_total,
+                "verified": adversarial.verified,
             },
             "notes": (
                 f"{adversarial.passed}/{adversarial.total} edge cases survived"
+                + (" [maintainer-verified]" if adversarial.verified else "")
                 if adversarial.total > 0 else "No adversarial tests run"
             ),
         },

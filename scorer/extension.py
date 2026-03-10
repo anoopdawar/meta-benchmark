@@ -1,9 +1,12 @@
 """
-Extension scorer — tests whether the implementation can be extended via a second prompt.
+Extension scorer — tests whether the initial implementation included remote operations.
 
-Phase 1: Run the extension test suite against the submission (if already extended).
-Phase 2: If running automated extension, pass extension prompt to agent and re-test.
-For now, Phase 1 only (Phase 2 requires a live agent).
+Runs the extension test suite (remote add, push, pull, fetch) against the submission.
+An agent that builds remote operations in its first response scores well here.
+
+Note: The "second prompt → agent → re-test" flow described in the rubric is not yet
+implemented. This scorer measures whether the first response included extension features,
+which is a valid proxy for architectural extensibility.
 """
 
 from __future__ import annotations
