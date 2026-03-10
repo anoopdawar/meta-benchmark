@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta-Benchmark Leaderboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      background: #f8f9fa;
+      color: #1a1a1a;
+    }
+
+    header {
+      background: #0f1117;
+      color: #fff;
+      padding: 24px 32px;
+      border-bottom: 3px solid #2563eb;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      color: #94a3b8;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    header .links {
+      margin-top: 12px;
+      display: flex;
+      gap: 16px;
+    }
+
+    header .links a {
+      color: #60a5fa;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    header .links a:hover { text-decoration: underline; }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 24px 32px; }
+
+    .filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+    }
+
+    select, input[type="text"] {
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+      color: #1a1a1a;
+      min-width: 160px;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37,99,235,0.1);
+    }
+
+    .table-wrapper {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: #f1f5f9;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #475569;
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    th:hover { background: #e2e8f0; }
+    th.sort-asc::after { content: " ↑"; }
+    th.sort-desc::after { content: " ↓"; }
+
+    tbody tr {
+      border-bottom: 1px solid #f1f5f9;
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    tbody tr:hover { background: #f8faff; }
+    tbody tr:last-child { border-bottom: none; }
+
+    td {
+      padding: 12px 14px;
+      vertical-align: middle;
+    }
+
+    .model-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .framework-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .score-cell {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+    }
+
+    .score-total {
+      font-size: 16px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .score-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bar-bg {
+      width: 64px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .score-high .bar-fill { background: #16a34a; }
+    .score-mid .bar-fill { background: #ca8a04; }
+    .score-low .bar-fill { background: #dc2626; }
+
+    .date-cell { color: #64748b; font-size: 12px; white-space: nowrap; }
+    .cost-cell { color: #475569; font-variant-numeric: tabular-nums; }
+
+    /* Detail panel */
+    .detail-row { display: none; }
+    .detail-row.open { display: table-row; }
+
+    .detail-panel {
+      padding: 20px 24px;
+      background: #fafbfd;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .detail-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .detail-card h3 {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .dim-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .dim-score:last-child { border-bottom: none; }
+
+    .dim-name { color: #374151; }
+    .dim-value { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 8px;
+    }
+
+    .meta-row span strong { color: #374151; }
+
+    .no-results {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #94a3b8;
+      font-size: 12px;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Meta-Benchmark Leaderboard</h1>
+  <p>Community standard for measuring AI coding agents on real, non-trivial software development.</p>
+  <div class="links">
+    <a href="submissions.html">Submit a run</a>
+    <a href="https://github.com/meta-benchmark/meta-benchmark" target="_blank">GitHub</a>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="filters">
+    <div class="filter-group">
+      <label>Harness</label>
+      <select id="filter-harness">
+        <option value="">All harnesses</option>
+        <option value="mini-git">mini-git</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Agent Framework</label>
+      <select id="filter-framework">
+        <option value="">All frameworks</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Harness Version</label>
+      <select id="filter-version">
+        <option value="">All versions</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Search model</label>
+      <input type="text" id="filter-model" placeholder="e.g. claude, gpt-4...">
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table id="leaderboard-table">
+      <thead>
+        <tr>
+          <th data-col="rank">#</th>
+          <th data-col="model">Model</th>
+          <th data-col="agent_framework">Framework</th>
+          <th data-col="total_score">Total ▼</th>
+          <th data-col="scores.functional.score">Functional<br><small style="font-weight:400">30%</small></th>
+          <th data-col="scores.adversarial.score">Adversarial<br><small style="font-weight:400">15%</small></th>
+          <th data-col="scores.extension.score">Extension<br><small style="font-weight:400">10%</small></th>
+          <th data-col="scores.mutation.score">Mutation<br><small style="font-weight:400">10%</small></th>
+          <th data-col="scores.performance.score">Perf<br><small style="font-weight:400">15%</small></th>
+          <th data-col="scores.reliability.score">Reliability<br><small style="font-weight:400">10%</small></th>
+          <th data-col="scores.quality.score">Quality<br><small style="font-weight:400">10%</small></th>
+          <th data-col="cost_usd">Cost</th>
+          <th data-col="date">Date</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr><td colspan="13" class="no-results">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<footer>
+  Meta-Benchmark — open standard for AI coding agent evaluation.
+  <a href="submissions.html" style="color:#60a5fa">Submit your run.</a>
+</footer>
+
+<script>
+let allRuns = [];
+let sortCol = 'total_score';
+let sortDir = 'desc';
+let openRow = null;
+
+function getNestedValue(obj, path) {
+  return path.split('.').reduce((o, k) => (o && o[k] !== undefined ? o[k] : null), obj);
+}
+
+function scoreClass(score) {
+  if (score >= 75) return 'score-high';
+  if (score >= 50) return 'score-mid';
+  return 'score-low';
+}
+
+function scoreBar(score) {
+  const cls = scoreClass(score);
+  return `<div class="score-bar ${cls}">
+    <span class="score-cell">${score !== null ? score.toFixed(1) : '—'}</span>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(score||0,100)}%"></div></div>
+  </div>`;
+}
+
+function formatDate(iso) {
+  try { return new Date(iso).toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'}); }
+  catch { return iso; }
+}
+
+function renderTable(runs) {
+  const tbody = document.getElementById('table-body');
+  if (!runs.length) {
+    tbody.innerHTML = '<tr><td colspan="13" class="no-results">No runs match the current filters.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = runs.map((run, idx) => {
+    const s = run.scores;
+    const totalCls = scoreClass(run.total_score);
+    return `
+    <tr class="data-row" data-id="${run.id}" onclick="toggleDetail('${run.id}')">
+      <td>${idx + 1}</td>
+      <td><div class="model-name">${run.model}</div></td>
+      <td><span class="framework-badge">${run.agent_framework}</span></td>
+      <td><span class="score-total ${totalCls}">${run.total_score.toFixed(1)}</span></td>
+      <td>${scoreBar(s.functional?.score)}</td>
+      <td>${scoreBar(s.adversarial?.score)}</td>
+      <td>${scoreBar(s.extension?.score)}</td>
+      <td>${scoreBar(s.mutation?.score)}</td>
+      <td>${scoreBar(s.performance?.score)}</td>
+      <td>${scoreBar(s.reliability?.score)}</td>
+      <td>${scoreBar(s.quality?.score)}</td>
+      <td class="cost-cell">$${run.cost_usd?.toFixed(2) ?? '—'}</td>
+      <td class="date-cell">${formatDate(run.date)}</td>
+    </tr>
+    <tr class="detail-row" id="detail-${run.id}">
+      <td colspan="13">${renderDetail(run)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDetail(run) {
+  const s = run.scores;
+  const dims = s.quality?.detail || {};
+
+  const judgeRows = Object.entries(dims).map(([dim, data]) =>
+    `<div class="dim-score">
+      <span class="dim-name">${dim.replace(/_/g,' ')}</span>
+      <span class="dim-value">${data.score}</span>
+    </div>`
+  ).join('');
+
+  const tiers = s.functional?.detail?.tiers || {};
+  const tierRows = Object.entries(tiers).map(([t, d]) =>
+    `<div class="dim-score">
+      <span class="dim-name">${t}</span>
+      <span class="dim-value">${d.passed}/${d.total} (${d.score.toFixed(0)})</span>
+    </div>`
+  ).join('');
+
+  const perfDetail = s.performance?.detail || {};
+  const perfRows = Object.entries(perfDetail).map(([bench, d]) =>
+    `<div class="dim-score">
+      <span class="dim-name">${bench.replace(/_/g,' ')}</span>
+      <span class="dim-value">p95=${d.p95?.toFixed(2)}s (${d.score?.toFixed(0)})</span>
+    </div>`
+  ).join('');
+
+  return `<div class="detail-panel">
+    <div class="meta-row">
+      <span><strong>Run ID:</strong> ${run.id}</span>
+      <span><strong>Harness:</strong> ${run.harness} v${run.harness_version}</span>
+      <span><strong>Duration:</strong> ${(run.wall_clock_seconds/60).toFixed(0)}m ${run.wall_clock_seconds%60}s</span>
+      <span><strong>Tokens:</strong> ${(run.tokens_input/1000).toFixed(0)}k in / ${(run.tokens_output/1000).toFixed(0)}k out</span>
+      <span><strong>Cost:</strong> $${run.cost_usd?.toFixed(2)}</span>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-card">
+        <h3>Functional — Tier Breakdown</h3>
+        ${tierRows || '<div class="dim-score"><span>No tier data</span></div>'}
+      </div>
+      <div class="detail-card">
+        <h3>Performance (p95 latency)</h3>
+        ${perfRows || '<div class="dim-score"><span>No performance data</span></div>'}
+      </div>
+      <div class="detail-card">
+        <h3>Code Quality — Judge Dimensions</h3>
+        ${judgeRows || '<div class="dim-score"><span>No judge data</span></div>'}
+      </div>
+      <div class="detail-card">
+        <h3>Score Summary</h3>
+        ${Object.entries(run.scores).map(([dim, d]) =>
+          `<div class="dim-score">
+            <span class="dim-name">${dim}</span>
+            <span class="dim-value">${d.score.toFixed(1)} × ${(d.weight*100).toFixed(0)}%</span>
+          </div>`
+        ).join('')}
+        <div class="dim-score" style="border-top:2px solid #e2e8f0;margin-top:4px;padding-top:8px">
+          <span class="dim-name" style="font-weight:700">Total</span>
+          <span class="dim-value" style="font-size:16px">${run.total_score.toFixed(1)}</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById(`detail-${id}`);
+  if (!row) return;
+  if (openRow && openRow !== row) openRow.classList.remove('open');
+  row.classList.toggle('open');
+  openRow = row.classList.contains('open') ? row : null;
+}
+
+function applyFilters() {
+  const harness = document.getElementById('filter-harness').value;
+  const framework = document.getElementById('filter-framework').value;
+  const version = document.getElementById('filter-version').value;
+  const modelSearch = document.getElementById('filter-model').value.toLowerCase();
+
+  let filtered = allRuns.filter(run => {
+    if (harness && run.harness !== harness) return false;
+    if (framework && run.agent_framework !== framework) return false;
+    if (version && run.harness_version !== version) return false;
+    if (modelSearch && !run.model.toLowerCase().includes(modelSearch)) return false;
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const av = getNestedValue(a, sortCol);
+    const bv = getNestedValue(b, sortCol);
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
+    return sortDir === 'desc' ? -cmp : cmp;
+  });
+
+  renderTable(filtered);
+}
+
+function populateFilterOptions() {
+  const frameworks = [...new Set(allRuns.map(r => r.agent_framework))];
+  const versions = [...new Set(allRuns.map(r => r.harness_version))];
+
+  const fwSelect = document.getElementById('filter-framework');
+  frameworks.forEach(fw => {
+    const opt = document.createElement('option');
+    opt.value = fw; opt.textContent = fw;
+    fwSelect.appendChild(opt);
+  });
+
+  const vSelect = document.getElementById('filter-version');
+  versions.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = `v${v}`;
+    vSelect.appendChild(opt);
+  });
+}
+
+// Sort on header click
+document.querySelectorAll('th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    if (sortCol === col) {
+      sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+    } else {
+      sortCol = col;
+      sortDir = 'desc';
+    }
+    document.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(sortDir === 'desc' ? 'sort-desc' : 'sort-asc');
+    applyFilters();
+  });
+});
+
+// Filter listeners
+['filter-harness','filter-framework','filter-version'].forEach(id =>
+  document.getElementById(id).addEventListener('change', applyFilters)
+);
+document.getElementById('filter-model').addEventListener('input', applyFilters);
+
+// Load data
+fetch('data/runs.json')
+  .then(r => r.json())
+  .then(data => {
+    allRuns = data;
+    populateFilterOptions();
+    applyFilters();
+    // Mark default sort column
+    document.querySelector('th[data-col="total_score"]').classList.add('sort-desc');
+  })
+  .catch(err => {
+    document.getElementById('table-body').innerHTML =
+      `<tr><td colspan="13" class="no-results">Failed to load data: ${err.message}</td></tr>`;
+  });
+</script>
+</body>
+</html>

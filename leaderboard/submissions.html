@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit a Run — Meta-Benchmark</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      font-size: 14px; line-height: 1.6; background: #f8f9fa; color: #1a1a1a;
+    }
+    header {
+      background: #0f1117; color: #fff;
+      padding: 24px 32px; border-bottom: 3px solid #2563eb;
+    }
+    header h1 { font-size: 22px; font-weight: 700; }
+    header p { color: #94a3b8; margin-top: 4px; font-size: 13px; }
+    header a { color: #60a5fa; text-decoration: none; font-size: 13px; }
+    .container { max-width: 860px; margin: 0 auto; padding: 32px; }
+    h2 { font-size: 18px; font-weight: 700; margin: 32px 0 12px; color: #0f172a; }
+    h2:first-child { margin-top: 0; }
+    p { color: #374151; margin-bottom: 12px; }
+    pre {
+      background: #0f1117; color: #e2e8f0;
+      padding: 16px 20px; border-radius: 8px;
+      font-size: 13px; overflow-x: auto;
+      margin: 12px 0;
+    }
+    code {
+      background: #f1f5f9; color: #1e293b;
+      padding: 2px 6px; border-radius: 4px; font-size: 12px;
+    }
+    pre code { background: none; color: inherit; padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th {
+      padding: 8px 12px; text-align: left; background: #f1f5f9;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #475569; border: 1px solid #e2e8f0;
+    }
+    td { padding: 8px 12px; border: 1px solid #e2e8f0; color: #374151; vertical-align: top; }
+    td:first-child { font-weight: 600; white-space: nowrap; }
+    .required { color: #dc2626; }
+    .optional { color: #94a3b8; }
+    .note {
+      background: #eff6ff; border-left: 4px solid #2563eb;
+      padding: 12px 16px; border-radius: 0 6px 6px 0;
+      margin: 16px 0; color: #1e40af; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Submit a Run</h1>
+  <p>Package your agent's output and share it with the community. <a href="index.html">← Back to leaderboard</a></p>
+</header>
+
+<div class="container">
+
+  <h2>Prerequisites</h2>
+  <p>Before submitting, ensure your run meets these requirements:</p>
+  <ul style="margin: 8px 0 12px 20px; color: #374151;">
+    <li>Your agent received <strong>only</strong> the seed prompt from <code>harnesses/&lt;name&gt;/prompt.md</code></li>
+    <li>No additional context, examples, or partial implementations were provided</li>
+    <li>The harness version matches a published, tagged release</li>
+    <li>No human edits were made to the agent's output</li>
+  </ul>
+  <p>Runs that don't meet reproducibility criteria can be submitted as "unofficial."</p>
+
+  <h2>Option A: Automated Runner</h2>
+  <p>Use the built-in runner to generate a submission automatically:</p>
+  <pre><code>pip install -e .
+benchmark run --harness mini-git --agent claude-code --model claude-sonnet-4-6</code></pre>
+  <p>This creates a submission directory in <code>submissions/</code> and prints the path. Then score it:</p>
+  <pre><code>benchmark score --submission submissions/mini-git-claude-sonnet-4-6-20260310T140000Z --harness mini-git</code></pre>
+
+  <h2>Option B: Manual Submission</h2>
+  <p>For runs from other agents (Cursor, Devin, Copilot, etc.), create the following structure:</p>
+  <pre><code>submissions/
+  mini-git-&lt;model&gt;-&lt;date&gt;/
+    metadata.json        ← Required
+    workspace/           ← Agent output files
+      mini_git.py
+      test_mini_git.py
+      ...</code></pre>
+
+  <h2>metadata.json Schema</h2>
+  <pre><code>{
+  "model": "gpt-4o-2024-11-20",
+  "agent_framework": "cursor",
+  "agent_framework_version": "0.43.0",
+  "scaffolding_config": {},
+  "date": "2026-03-10T14:23:00Z",
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 847,
+  "tokens_input": 45000,
+  "tokens_output": 12000,
+  "cost_usd": 4.23,
+  "notes": ""
+}</code></pre>
+
+  <table>
+    <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>model</td><td><span class="required">required</span></td><td>Full model identifier including version</td></tr>
+      <tr><td>agent_framework</td><td><span class="required">required</span></td><td>Tool used (claude-code, cursor, devin, aider, raw-api…)</td></tr>
+      <tr><td>date</td><td><span class="required">required</span></td><td>ISO 8601 timestamp of when the run was performed</td></tr>
+      <tr><td>harness</td><td><span class="required">required</span></td><td>Harness name (e.g. <code>mini-git</code>)</td></tr>
+      <tr><td>harness_version</td><td><span class="required">required</span></td><td>Semver of the harness (e.g. <code>1.0.0</code>)</td></tr>
+      <tr><td>agent_framework_version</td><td><span class="optional">optional</span></td><td>Version of the agent framework</td></tr>
+      <tr><td>wall_clock_seconds</td><td><span class="optional">optional</span></td><td>Total elapsed wall-clock time</td></tr>
+      <tr><td>tokens_input / tokens_output</td><td><span class="optional">optional</span></td><td>Token counts</td></tr>
+      <tr><td>cost_usd</td><td><span class="optional">optional</span></td><td>Total cost in USD</td></tr>
+      <tr><td>notes</td><td><span class="optional">optional</span></td><td>Free-form context about the run</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Scoring Your Submission</h2>
+  <pre><code>python -m scorer.scorecard --submission submissions/my-run/ --harness mini-git --output scorecard.json</code></pre>
+
+  <h2>Adding to the Leaderboard</h2>
+  <p>To add your run to the public leaderboard:</p>
+  <ol style="margin: 8px 0 12px 20px; color: #374151;">
+    <li>Score your submission to get <code>scorecard.json</code></li>
+    <li>Open a pull request or issue on the repository</li>
+    <li>Include your <code>metadata.json</code> and <code>scorecard.json</code></li>
+    <li>A maintainer will verify and add it to <code>leaderboard/data/runs.json</code></li>
+  </ol>
+
+  <div class="note">
+    Model providers are encouraged to submit official runs. Leaderboard data is
+    public — all runs are visible to everyone. The private held-out test layer
+    is never published and is re-evaluated by maintainers for new submissions.
+  </div>
+
+</div>
+</body>
+</html>
