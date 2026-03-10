@@ -254,14 +254,19 @@ Each benchmark is run 5 times. The p95 latency (4th of 5 sorted measurements) is
 
 ### Scoring Formula
 
+Each benchmark has a `target_p95` (full score) and `fail_p95` (zero score) defined
+in `tests/performance/thresholds.json`. Scoring is piecewise linear:
+
 ```
 For each benchmark:
-  if p95 <= target:         sub_score = 100
-  elif p95 <= 2 * target:   sub_score = 50 * (2 - p95/target)
-  else:                     sub_score = 0
+  if p95 <= target_p95:  sub_score = 100
+  if p95 >= fail_p95:    sub_score = 0
+  otherwise:             sub_score = 100 * (fail_p95 - p95) / (fail_p95 - target_p95)
 
-performance_score = mean(sub_scores for all applicable benchmarks)
+performance_score = weighted_mean(sub_scores, weights from thresholds.json)
 ```
+
+This allows per-benchmark calibration. See `thresholds.json` for actual target/fail values.
 
 N/A for a specific benchmark if the relevant command is not implemented.
 

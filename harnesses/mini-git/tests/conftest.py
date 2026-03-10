@@ -46,6 +46,10 @@ def _discover_mini_git_cmd() -> Optional[List[str]]:
 
 _MINI_GIT_CMD: Optional[List[str]] = _discover_mini_git_cmd()
 
+# Public aliases used by sub-package conftests
+MINI_GIT_CMD: Optional[List[str]] = _MINI_GIT_CMD
+MINI_GIT_NOT_FOUND: bool = _MINI_GIT_CMD is None
+
 
 # ---------------------------------------------------------------------------
 # Session-scoped skip marker

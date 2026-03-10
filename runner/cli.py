@@ -98,10 +98,28 @@ def cmd_score(args: argparse.Namespace) -> int:
             print(f"  - {err}", file=sys.stderr)
         return 1
 
-    print(f"Submission valid: {args.submission}")
-    print("\nScorer not yet integrated in this release.")
-    print("Run the scorer directly:")
-    print(f"  python -m scorer.scorecard --submission {args.submission} --harness {args.harness}")
+    harness_path = PROJECT_ROOT / "harnesses" / args.harness
+    if not harness_path.exists():
+        print(f"error: harness '{args.harness}' not found at {harness_path}", file=sys.stderr)
+        return 1
+
+    output_path = Path(args.output) if args.output else Path(args.submission) / "scorecard.json"
+
+    try:
+        from scorer.scorecard import score_submission
+        scorecard = score_submission(
+            submission_path=Path(args.submission),
+            harness_path=harness_path,
+            output_path=output_path,
+            dry_run=False,
+        )
+        print()
+        print(scorecard.generate_report())
+    except ImportError:
+        print("Scorer module not available. Run:", file=sys.stderr)
+        print(f"  python -m scorer.scorecard --submission {args.submission} --harness {args.harness}", file=sys.stderr)
+        return 1
+
     return 0
 
 
