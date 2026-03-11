@@ -14,7 +14,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from scorer.behavioral import _find_mini_git_cmd, _run_pytest_tier
+from scorer.behavioral import _find_cmd, _harness_cmd_var, _run_pytest_tier
 
 
 @dataclass
@@ -91,11 +91,14 @@ def run_extension(
             notes=f"agent.extend() raised: {exc}",
         )
 
-    mini_git_cmd = _find_mini_git_cmd(workspace_path)
+    harness_name = harness_path.name
+    cmd_var = _harness_cmd_var(harness_name)
+    impl_cmd = _find_cmd(workspace_path, harness_name)
     tier_result = _run_pytest_tier(
         tier_path=extension_path,
         tests_root=tests_root,
-        mini_git_cmd=mini_git_cmd,
+        impl_cmd=impl_cmd,
+        cmd_var=cmd_var,
         python=python,
         timeout=timeout,
     )
