@@ -27,6 +27,6 @@ def list_10k(tmp_path_factory):
 def test_lrange_10k_p95_within_target(list_10k):
     stats = time_command(["LRANGE", "biglist", "0", "-1"], data_path=list_10k, n=5)
     print(f"\nlrange 10k list — p50={stats['p50']:.3f}s p95={stats['p95']:.3f}s p99={stats['p99']:.3f}s")
-    assert stats["p95"] < 10.0
+    assert stats["p95"] < 10.0, f"p95 {stats['p95']:.2f}s exceeds fail threshold 10.0s"
     if stats["p95"] > 2.0:
         pytest.xfail(f"p95 {stats['p95']:.2f}s exceeds target 2.0s")

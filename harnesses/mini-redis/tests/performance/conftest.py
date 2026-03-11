@@ -1,13 +1,10 @@
 """Performance test helpers: build pre-populated data files directly."""
 
-import json
 import time
-import statistics
 import os
 import subprocess
 import shlex
 from pathlib import Path
-from typing import List
 import pytest
 
 
@@ -16,7 +13,6 @@ def build_string_store(path: Path, n: int) -> None:
     # Agent's JSON schema is unknown, so we call SET via subprocess for one key
     # then read the schema to understand the format, then write directly.
     # Simpler: write n keys via batched MSET subprocess calls.
-    import shlex, os
     cmd_str = os.environ.get("MINI_REDIS_CMD", "")
     if not cmd_str:
         pytest.skip("MINI_REDIS_CMD not set")
@@ -32,7 +28,6 @@ def build_string_store(path: Path, n: int) -> None:
 
 def time_command(cmd_args: list, data_path: Path, n: int = 7) -> dict:
     """Run a redis command n times and return p50/p95/p99 stats."""
-    import shlex, os
     cmd_str = os.environ.get("MINI_REDIS_CMD", "")
     if not cmd_str:
         pytest.skip("MINI_REDIS_CMD not set")

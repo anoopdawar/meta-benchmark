@@ -76,7 +76,6 @@ def test_sigkill_does_not_corrupt_data_file(tmp_path):
     # Establish a clean baseline
     subprocess.run(_CMD + ["SET", "baseline", "ok"], env=env, capture_output=True)
     assert db.exists(), "Baseline write failed"
-    baseline_content = db.read_text()
 
     # Launch a process and kill it immediately with SIGKILL
     proc = subprocess.Popen(

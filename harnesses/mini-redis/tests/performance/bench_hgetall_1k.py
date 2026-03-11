@@ -28,6 +28,6 @@ def hash_1k(tmp_path_factory):
 def test_hgetall_1k_p95_within_target(hash_1k):
     stats = time_command(["HGETALL", "bighash"], data_path=hash_1k, n=5)
     print(f"\nhgetall 1k fields — p50={stats['p50']:.3f}s p95={stats['p95']:.3f}s p99={stats['p99']:.3f}s")
-    assert stats["p95"] < 5.0
+    assert stats["p95"] < 5.0, f"p95 {stats['p95']:.2f}s exceeds fail threshold 5.0s"
     if stats["p95"] > 1.0:
         pytest.xfail(f"p95 {stats['p95']:.2f}s exceeds target 1.0s")
