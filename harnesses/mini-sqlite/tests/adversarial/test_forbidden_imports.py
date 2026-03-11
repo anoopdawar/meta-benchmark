@@ -2,7 +2,6 @@
 
 import os
 import shlex
-import sys
 from pathlib import Path
 
 import pytest
