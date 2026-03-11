@@ -2,11 +2,11 @@
 LLM Judge scorer — qualitative code quality assessment.
 
 Reads judge/rubric.md and calibration samples, then queries 3 LLM models
-to score the submission on 5 qualitative dimensions. Aggregates scores.
+to score the submission on 5 qualitative dimensions. Aggregates scores
+as mean across models with std dev tracking.
 
-In this implementation, the actual LLM calls are stubbed with clear
-integration points. The judge infrastructure (calibration loading,
-aggregation, JSON output) is fully implemented.
+Requires ANTHROPIC_API_KEY to be set. Pass dry_run=True to skip API calls
+(returns 0.0 scores) for pipeline testing without incurring cost.
 """
 
 from __future__ import annotations
