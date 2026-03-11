@@ -1,16 +1,163 @@
 [
   {
-    "id": "mini-git-gpt-5-4-20260311T065807Z",
+    "id": "mini-git-gemini-2-5-pro-20260311T111218Z",
+    "harness": "mini-git",
+    "harness_version": "1.0.0",
+    "model": "gemini-2.5-pro",
+    "agent_framework": "gemini-api",
+    "date": "2026-03-11T11:14:56.750867+00:00",
+    "wall_clock_seconds": 158.588,
+    "tokens_input": 1771,
+    "tokens_output": 13894,
+    "cost_usd": 0.1412,
+    "total_score": 79.86,
+    "scores": {
+      "functional": {
+        "score": 96.84,
+        "weight": 0.35,
+        "detail": {
+          "total_passed": 70,
+          "total_tests": 72,
+          "tiers": {
+            "tier1": {
+              "passed": 34,
+              "total": 34,
+              "score": 100.0
+            },
+            "tier2": {
+              "passed": 21,
+              "total": 22,
+              "score": 95.45
+            },
+            "tier3": {
+              "passed": 15,
+              "total": 16,
+              "score": 93.75
+            }
+          }
+        },
+        "notes": "70/72 tests passing"
+      },
+      "adversarial": {
+        "score": 87.95,
+        "weight": 0.2,
+        "detail": {
+          "passed": 146,
+          "total": 166,
+          "survival_rate": 87.95,
+          "held_out_passed": 10,
+          "held_out_total": 11,
+          "verified": true
+        },
+        "notes": "146/166 edge cases survived [maintainer-verified]"
+      },
+      "extension": {
+        "score": 25.0,
+        "weight": 0.1,
+        "detail": {
+          "passed": 4,
+          "total": 16,
+          "phase": "live_agent"
+        },
+        "notes": "4/16 extension tests passing"
+      },
+      "mutation": {
+        "score": 0.0,
+        "weight": 0.0,
+        "detail": {
+          "killed": 0,
+          "survived": 0,
+          "total": 0,
+          "method": "unavailable"
+        },
+        "notes": "No test files found in submission workspace."
+      },
+      "performance": {
+        "score": 100.0,
+        "weight": 0.15,
+        "detail": {
+          "log_10k_commits": {
+            "p50": 0.292,
+            "p95": 0.292,
+            "target_p95": 2.0,
+            "score": 100.0,
+            "skipped": false
+          },
+          "add_100k_files": {
+            "p50": 0.291,
+            "p95": 0.291,
+            "target_p95": 30.0,
+            "score": 100.0,
+            "skipped": false
+          },
+          "diff_1k_changed_files": {
+            "p50": 0.303,
+            "p95": 0.303,
+            "target_p95": 1.0,
+            "score": 100.0,
+            "skipped": false
+          },
+          "merge_deep_diverge": {
+            "p50": 0.293,
+            "p95": 0.293,
+            "target_p95": 5.0,
+            "score": 100.0,
+            "skipped": false
+          }
+        },
+        "notes": ""
+      },
+      "reliability": {
+        "score": 71.43,
+        "weight": 0.1,
+        "detail": {
+          "passed": 10,
+          "total": 14
+        },
+        "notes": "10/14 reliability scenarios passing"
+      },
+      "quality": {
+        "score": 37.32,
+        "weight": 0.1,
+        "detail": {
+          "plumbing_porcelain_separation": {
+            "score": 58.3,
+            "reasoning": "There is a recognizable plumbing layer \u2014 `hash_object`, `read_object`, `read_index`, `write_index`, `update_ref`, `get_ref`, `write_tree` \u2014 and command handlers delegate to these functions rather than inlining SHA1 computation or file I/O directly. However, the separation is incomplete: `cmd_commit` builds the commit text format inline rather than through a dedicated `write_commit` plumbing function, and `cmd_pull` contains an inline nested `checkout_tree` function that mixes tree traversal logic with file I/O directly in the command handler."
+          },
+          "object_model_abstraction": {
+            "score": 23.3,
+            "reasoning": "There are no Blob, Tree, or Commit classes or structured representations. hash_object and read_object handle the header format centrally, which is good, but tree entry parsing is duplicated in concept (write_tree builds entries one way, get_tree_entries parses them). Commit data is constructed as raw string concatenation in cmd_commit with no commit abstraction, and parsed ad-hoc via string splitting in cmd_log and iter_commits_and_parents."
+          },
+          "naming_consistency": {
+            "score": 66.7,
+            "reasoning": "Naming is mostly consistent \u2014 `sha1` is used uniformly, command handlers follow `cmd_*` naming, and helper functions have clear names. There are some minor inconsistencies: `hash_object` is both a plumbing concept and used as a verb (vs. noun-style `create_blob`), and the index entry namedtuple field `sha1` stores a hex string while `sha1_bytes` is a local variable, creating minor conceptual confusion, but overall readability is good."
+          },
+          "test_quality": {
+            "score": 0.0,
+            "reasoning": "No test file is present in the submission \u2014 there are no tests at all to evaluate."
+          },
+          "scope_discipline": {
+            "score": 38.3,
+            "reasoning": "The implementation adds several out-of-scope features (`remote`, `fetch`, `pull`, `push`) that are typically considered networking/remote features beyond a basic mini-git, while simultaneously registering stub commands (`checkout`, `branch`, `merge`, `status`, `hash-object`, `cat-file`, `write-tree`) that print error messages rather than implementing requested functionality. The stub commands represent a significant portion of a typical mini-git spec being silently skipped, and the remote networking additions are clearly out-of-scope feature creep."
+          }
+        },
+        "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+      }
+    },
+    "_real": true
+  },
+  {
+    "id": "mini-git-gpt-5-4-20260311T111728Z",
     "harness": "mini-git",
     "harness_version": "1.0.0",
     "model": "gpt-5.4",
     "agent_framework": "openai-api",
-    "date": "2026-03-11T06:59:55.001842+00:00",
-    "wall_clock_seconds": 107.95,
+    "date": "2026-03-11T11:19:15.798979+00:00",
+    "wall_clock_seconds": 107.654,
     "tokens_input": 1655,
-    "tokens_output": 9942,
-    "cost_usd": 0.1533,
-    "total_score": 83.44,
+    "tokens_output": 9876,
+    "cost_usd": 0.1523,
+    "total_score": 79.32,
     "scores": {
       "functional": {
         "score": 96.84,
@@ -57,49 +204,49 @@
         "detail": {
           "passed": 4,
           "total": 16,
-          "phase": "static"
+          "phase": "live_agent"
         },
         "notes": "4/16 extension tests passing"
       },
       "mutation": {
-        "score": 100.0,
+        "score": 63.78,
         "weight": 0.1,
         "detail": {
-          "killed": 1676,
-          "survived": 0,
-          "total": 1676,
+          "killed": 1298,
+          "survived": 737,
+          "total": 2035,
           "method": "mutmut"
         },
-        "notes": "100% mutation kill rate"
+        "notes": "64% mutation kill rate"
       },
       "performance": {
         "score": 100.0,
         "weight": 0.15,
         "detail": {
           "log_10k_commits": {
-            "p50": 0.313,
-            "p95": 0.313,
+            "p50": 0.506,
+            "p95": 0.506,
             "target_p95": 2.0,
             "score": 100.0,
             "skipped": false
           },
           "add_100k_files": {
-            "p50": 0.292,
-            "p95": 0.292,
+            "p50": 0.362,
+            "p95": 0.362,
             "target_p95": 30.0,
             "score": 100.0,
             "skipped": false
           },
           "diff_1k_changed_files": {
-            "p50": 0.293,
-            "p95": 0.293,
+            "p50": 0.366,
+            "p95": 0.366,
             "target_p95": 1.0,
             "score": 100.0,
             "skipped": false
           },
           "merge_deep_diverge": {
-            "p50": 0.294,
-            "p95": 0.294,
+            "p50": 0.338,
+            "p95": 0.338,
             "target_p95": 5.0,
             "score": 100.0,
             "skipped": false
@@ -117,28 +264,28 @@
         "notes": "10/14 reliability scenarios passing"
       },
       "quality": {
-        "score": 65.52,
+        "score": 60.54,
         "weight": 0.1,
         "detail": {
           "plumbing_porcelain_separation": {
-            "score": 69.3,
-            "reasoning": "ObjectStore provides clean plumbing for object I/O, and Repo methods abstract index/ref operations, but the merge() method directly constructs commit content and calls hash_object inline rather than delegating to write_commit \u2014 a clear plumbing violation that breaks the otherwise decent separation."
+            "score": 70.7,
+            "reasoning": "The Repo class provides solid plumbing abstractions for object storage, index management, and ref handling that command handlers use consistently. However, cmd_commit manually constructs commit raw bytes inline rather than calling a dedicated plumbing function, and two standalone functions bypass ObjectStore entirely to read/decompress objects directly."
           },
           "object_model_abstraction": {
-            "score": 45.0,
-            "reasoning": "There is a TreeEntry dataclass but no Blob, Tree, or Commit classes with serialize/deserialize methods \u2014 serialization and parsing logic is scattered across ObjectStore methods (write_blob, write_tree, write_commit, read_commit) rather than encapsulated in object-type classes, and SHA1 computation appears in multiple places including directly in merge()."
+            "score": 35.0,
+            "reasoning": "GitObject is a generic container with no type-specific logic; there are no dedicated Blob/Tree/Commit classes with serialization methods. Commit bytes are constructed inline in cmd_commit, tree entries are built via standalone tree_entry(), and SHA1 computation is scattered rather than encapsulated in object types."
           },
           "naming_consistency": {
-            "score": 76.0,
-            "reasoning": "Naming is quite consistent throughout: `sha` is used uniformly for object hashes, command-level methods use clear names (commit, checkout, merge, status, diff), and helper methods follow consistent patterns (read_*/write_*, get_*). Minor inconsistencies include `head_ref` vs `head_target` vs `head_commit` which could be confusing, and the mix of `rel` and `path`/`pathspec` for relative paths."
+            "score": 73.0,
+            "reasoning": "The codebase maintains strong consistency in naming object identifiers ('oid'), command function prefixes (cmd_*), and method naming on Repo. A few minor inconsistencies like 'snap' vs 'snapshot' abbreviations and the parallel collect_reachable_* functions with slightly inconsistent names exist but don't significantly impede readability."
           },
           "test_quality": {
-            "score": 65.0,
-            "reasoning": "Tests go well beyond smoke tests \u2014 they verify file contents, SHA roundtrips (test_blob_roundtrip, test_binary_file), conflict marker presence, and specific output strings. However, error condition testing is minimal (no tests for operations on missing objects, corrupt data, or invalid refs), and SHA1 correctness of tree/commit objects is not verified against known-good values."
+            "score": 64.0,
+            "reasoning": "Tests cover a good range of features including add/commit/log/status, branching, checkout, fast-forward merge, conflict merge, diff, reset --hard, stash, and edge cases like empty files, binary data, and filenames with spaces. Tests verify content correctness (file contents, output strings, conflict markers), not just exit codes. However, no tests verify exact SHA1 values, no tests for error conditions (e.g., committing with nothing staged), and object round-trip verification is limited to one basic blob test."
           },
           "scope_discipline": {
-            "score": 72.3,
-            "reasoning": "All major requested features are implemented including stash, merge, diff, reset, and branch operations. However, stash_pop() in the implementation is incomplete (the method body only loads items and raises an error if empty but does nothing else), and the stash test expects 'Applied stash' output that would require the missing implementation, suggesting scope was claimed but not fully delivered."
+            "score": 60.0,
+            "reasoning": "The implementation adds stash, diff, reset, and full remote management infrastructure (including object transfer between local repos) that appear beyond the core requested scope. While these are git-like features, implementing remote push/pull plumbing without being asked represents significant out-of-scope work, and the code appears truncated (cmd_merge is cut off mid-implementation suggesting rushed scope management)."
           }
         },
         "notes": "LLM judge score (models: claude-sonnet-4-6...)"
@@ -147,17 +294,17 @@
     "_real": true
   },
   {
-    "id": "mini-git-gpt-5-3-codex-20260311T103525Z",
+    "id": "mini-git-gpt-5-3-codex-20260311T112303Z",
     "harness": "mini-git",
     "harness_version": "1.0.0",
     "model": "gpt-5.3-codex",
     "agent_framework": "openai-api",
-    "date": "2026-03-11T10:36:07.823374+00:00",
-    "wall_clock_seconds": 42.729,
+    "date": "2026-03-11T11:23:36.170833+00:00",
+    "wall_clock_seconds": 32.869,
     "tokens_input": 1655,
-    "tokens_output": 3534,
-    "cost_usd": 0.0524,
-    "total_score": 80.64,
+    "tokens_output": 2468,
+    "cost_usd": 0.0374,
+    "total_score": 78.73,
     "scores": {
       "functional": {
         "score": 96.84,
@@ -204,7 +351,7 @@
         "detail": {
           "passed": 4,
           "total": 16,
-          "phase": "static"
+          "phase": "live_agent"
         },
         "notes": "4/16 extension tests passing"
       },
@@ -224,29 +371,29 @@
         "weight": 0.15,
         "detail": {
           "log_10k_commits": {
-            "p50": 0.328,
-            "p95": 0.328,
+            "p50": 0.283,
+            "p95": 0.283,
             "target_p95": 2.0,
             "score": 100.0,
             "skipped": false
           },
           "add_100k_files": {
-            "p50": 0.326,
-            "p95": 0.326,
+            "p50": 0.289,
+            "p95": 0.289,
             "target_p95": 30.0,
             "score": 100.0,
             "skipped": false
           },
           "diff_1k_changed_files": {
-            "p50": 0.382,
-            "p95": 0.382,
+            "p50": 0.287,
+            "p95": 0.287,
             "target_p95": 1.0,
             "score": 100.0,
             "skipped": false
           },
           "merge_deep_diverge": {
-            "p50": 0.358,
-            "p95": 0.358,
+            "p50": 0.29,
+            "p95": 0.29,
             "target_p95": 5.0,
             "score": 100.0,
             "skipped": false
@@ -264,28 +411,28 @@
         "notes": "10/14 reliability scenarios passing"
       },
       "quality": {
-        "score": 45.14,
+        "score": 26.0,
         "weight": 0.1,
         "detail": {
           "plumbing_porcelain_separation": {
-            "score": 62.3,
-            "reasoning": "The Repo class provides a reasonable plumbing layer (write_object, read_object, read_index, write_index, head_commit, update_head), and command handlers like cmd_commit and cmd_add delegate to these. However, tree building/parsing, commit parsing, and some logic like building commit content are standalone functions rather than part of a cohesive plumbing API. cmd_status directly calls repo.write_object to hash working tree files for comparison, which is acceptable but blurs the line."
+            "score": 35.0,
+            "reasoning": "There are some helper functions like `read_object`, `write_file`, `sha1_hex`, and ref manipulation utilities, but core git commands like `add`, `commit`, `status`, `log`, and `checkout` are entirely absent. The existing command handlers (`cmd_fetch`, `cmd_push`, `cmd_pull`) mix object copying, ref manipulation, and I/O directly \u2014 for example, `cmd_push` directly writes to the remote ref path rather than delegating to a plumbing abstraction."
           },
           "object_model_abstraction": {
-            "score": 30.0,
-            "reasoning": "There are no Blob, Tree, or Commit classes \u2014 objects are represented as raw bytes or plain dicts throughout. Serialization logic is scattered (tree building in build_tree, commit serialization inlined in cmd_commit, parsing in parse_commit), with no unified serialize/deserialize abstraction and no sha property on object types."
+            "score": 15.0,
+            "reasoning": "There is no Blob, Tree, or Commit class or abstraction. The `read_object` function deserializes the raw format and `parse_commit` parses commit content into a dict, but there is no structured object model \u2014 no `serialize()`/`deserialize()` methods, no SHA1 property, and the tree object type is completely unrepresented."
           },
           "naming_consistency": {
-            "score": 71.7,
-            "reasoning": "Naming is mostly consistent: 'sha' is used uniformly for hex digests, command handlers follow the cmd_ prefix convention, and helper functions use consistent patterns. Minor inconsistencies exist (e.g., 'rel' as a function name is terse and unclear, 'bname' vs 'branch' in different spots), but overall the codebase reads coherently."
+            "score": 66.7,
+            "reasoning": "Within the file, naming is reasonably consistent \u2014 `cmd_*` for command handlers, `git_path` for path construction, `read_file`/`write_file` as paired operations, and `oid` consistently for object identifiers. However, there are minor inconsistencies such as `sha1_hex` as a function name vs. using `oid` as the variable name for what is a SHA1 hex string, and `resolve_ref` vs `get_head_commit` having different abstraction levels without clear distinction."
           },
           "test_quality": {
             "score": 0.0,
-            "reasoning": "No test files are present in the provided implementation \u2014 there are zero tests of any kind, so this dimension scores at the floor."
+            "reasoning": "No test files are present in the implementation. There are zero tests of any kind."
           },
           "scope_discipline": {
-            "score": 61.7,
-            "reasoning": "The implementation covers init, add, commit, log, and status, which are the core requested commands. However, it includes stash directory creation in init (unused), a difflib import that is never used, and is missing checkout and branch commands that are commonly expected in mini-git scope; the absence of these is not explicitly acknowledged."
+            "score": 13.3,
+            "reasoning": "The implementation is severely out of scope \u2014 it implements only `init`, `remote`, `fetch`, `pull`, and `push` (networking/remote features) while completely omitting the core requested commands: `add`, `commit`, `status`, `log`, `checkout`, `diff`, and hash-object/cat-file plumbing. The agent built almost exclusively out-of-scope networking infrastructure while skipping the fundamental local git operations."
           }
         },
         "notes": "LLM judge score (models: claude-sonnet-4-6...)"
@@ -294,200 +441,56 @@
     "_real": true
   },
   {
-    "id": "mini-git-gemini-2-5-pro-20260311T064258Z",
-    "harness": "mini-git",
-    "harness_version": "1.0.0",
-    "model": "gemini-2.5-pro",
-    "agent_framework": "gemini-api",
-    "date": "2026-03-11T06:45:39.128778+00:00",
-    "wall_clock_seconds": 161.109,
-    "tokens_input": 1771,
-    "tokens_output": 13386,
-    "cost_usd": 0.1361,
-    "total_score": 80.19,
-    "scores": {
-      "functional": {
-        "score": 96.84,
-        "weight": 0.35,
-        "detail": {
-          "total_passed": 70,
-          "total_tests": 72,
-          "tiers": {
-            "tier1": {
-              "passed": 34,
-              "total": 34,
-              "score": 100.0
-            },
-            "tier2": {
-              "passed": 21,
-              "total": 22,
-              "score": 95.45
-            },
-            "tier3": {
-              "passed": 15,
-              "total": 16,
-              "score": 93.75
-            }
-          }
-        },
-        "notes": "70/72 tests passing"
-      },
-      "adversarial": {
-        "score": 87.95,
-        "weight": 0.2,
-        "detail": {
-          "passed": 146,
-          "total": 166,
-          "survival_rate": 87.95,
-          "held_out_passed": 10,
-          "held_out_total": 11,
-          "verified": true
-        },
-        "notes": "146/166 edge cases survived [maintainer-verified]"
-      },
-      "extension": {
-        "score": 25.0,
-        "weight": 0.1,
-        "detail": {
-          "passed": 4,
-          "total": 16,
-          "phase": "static"
-        },
-        "notes": "4/16 extension tests passing"
-      },
-      "mutation": {
-        "score": 0.0,
-        "weight": 0.0,
-        "detail": {
-          "killed": 0,
-          "survived": 0,
-          "total": 0,
-          "method": "unavailable"
-        },
-        "notes": "No test files found in submission workspace."
-      },
-      "performance": {
-        "score": 100.0,
-        "weight": 0.15,
-        "detail": {
-          "log_10k_commits": {
-            "p50": 0.296,
-            "p95": 0.296,
-            "target_p95": 2.0,
-            "score": 100.0,
-            "skipped": false
-          },
-          "add_100k_files": {
-            "p50": 0.296,
-            "p95": 0.296,
-            "target_p95": 30.0,
-            "score": 100.0,
-            "skipped": false
-          },
-          "diff_1k_changed_files": {
-            "p50": 0.295,
-            "p95": 0.295,
-            "target_p95": 1.0,
-            "score": 100.0,
-            "skipped": false
-          },
-          "merge_deep_diverge": {
-            "p50": 0.296,
-            "p95": 0.296,
-            "target_p95": 5.0,
-            "score": 100.0,
-            "skipped": false
-          }
-        },
-        "notes": ""
-      },
-      "reliability": {
-        "score": 71.43,
-        "weight": 0.1,
-        "detail": {
-          "passed": 10,
-          "total": 14
-        },
-        "notes": "10/14 reliability scenarios passing"
-      },
-      "quality": {
-        "score": 40.66,
-        "weight": 0.1,
-        "detail": {
-          "plumbing_porcelain_separation": {
-            "score": 58.3,
-            "reasoning": "There is a reasonable separation: `GitRepository` encapsulates `object_read`/`object_write`/`get_index`/`write_index`, and command handlers call these methods. However, `cmd_status` directly inlines blob SHA computation (`header = f'blob {len(data)}\\0'.encode(); hashlib.sha1(header + data).hexdigest()`) instead of delegating to the object layer, and `build_tree_from_index` is a free function rather than part of a clean plumbing API, representing partial but incomplete separation."
-          },
-          "object_model_abstraction": {
-            "score": 25.0,
-            "reasoning": "There are no Blob, Tree, or Commit classes \u2014 the code uses raw bytes and string manipulation throughout. The tree serialization format is embedded in `build_tree_from_index` and `get_tree_entries`, commit parsing is done inline in `cmd_log` and `cmd_merge`, and the blob SHA formula appears duplicated in `cmd_status`. The only abstraction is `IndexEntry` as a namedtuple, which is minimal."
-          },
-          "naming_consistency": {
-            "score": 61.7,
-            "reasoning": "Command handlers consistently use `cmd_` prefix, and helper functions like `repo_path`/`repo_file`/`repo_dir` follow a coherent pattern. However, variable naming has some inconsistencies: `sha`, `sha_hex`, `sha_bin`, `commit_sha`, `target_sha`, `giver_sha` are used without a fully consistent convention. The merge function shadows `base_sha`, `receiver_sha`, and `giver_sha` with local loop variables of the same name, which is a significant naming bug."
-          },
-          "test_quality": {
-            "score": 0.0,
-            "reasoning": "No test file is present in the implementation provided \u2014 there are no tests whatsoever to evaluate."
-          },
-          "scope_discipline": {
-            "score": 58.3,
-            "reasoning": "Core requested commands (init, add, commit, status, log, branch, checkout) are implemented, and merge support is partially implemented. However, the implementation is cut off mid-function (`cmd_merge` is incomplete), and several out-of-scope features like merge conflict handling and MERGE_HEAD management were added, while the implementation appears incomplete overall."
-          }
-        },
-        "notes": "LLM judge score (models: claude-sonnet-4-6...)"
-      }
-    },
-    "_real": true
-  },
-  {
-    "id": "mini-git-claude-opus-4-6-20260310T191557Z",
+    "id": "mini-git-claude-opus-4-6-20260311T110513Z",
     "harness": "mini-git",
     "harness_version": "1.0.0",
     "model": "claude-opus-4-6",
     "agent_framework": "claude-api",
-    "date": "2026-03-10T19:20:40.621366+00:00",
-    "wall_clock_seconds": 282.961,
+    "date": "2026-03-11T11:08:34.900246+00:00",
+    "wall_clock_seconds": 201.581,
     "tokens_input": 1822,
-    "tokens_output": 26492,
-    "cost_usd": 2.0142,
-    "total_score": 62.45,
+    "tokens_output": 18371,
+    "cost_usd": 1.4052,
+    "total_score": 76.13,
     "scores": {
       "functional": {
-        "score": 91.01,
+        "score": 96.84,
         "weight": 0.35,
         "detail": {
-          "total_passed": 66,
+          "total_passed": 70,
           "total_tests": 72,
           "tiers": {
             "tier1": {
-              "passed": 33,
+              "passed": 34,
               "total": 34,
-              "score": 97.06
-            },
-            "tier2": {
-              "passed": 22,
-              "total": 22,
               "score": 100.0
             },
+            "tier2": {
+              "passed": 21,
+              "total": 22,
+              "score": 95.45
+            },
             "tier3": {
-              "passed": 11,
+              "passed": 15,
               "total": 16,
-              "score": 68.75
+              "score": 93.75
             }
           }
         },
-        "notes": "66/72 tests passing"
+        "notes": "70/72 tests passing"
       },
       "adversarial": {
-        "score": 87.74,
+        "score": 87.95,
         "weight": 0.2,
         "detail": {
-          "passed": 136,
-          "total": 155,
-          "survival_rate": 87.74
+          "passed": 146,
+          "total": 166,
+          "survival_rate": 87.95,
+          "held_out_passed": 10,
+          "held_out_total": 11,
+          "verified": true
         },
-        "notes": "136/155 edge cases survived"
+        "notes": "146/166 edge cases survived [maintainer-verified]"
       },
       "extension": {
         "score": 25.0,
@@ -495,7 +498,7 @@
         "detail": {
           "passed": 4,
           "total": 16,
-          "phase": "static"
+          "phase": "live_agent"
         },
         "notes": "4/16 extension tests passing"
       },
@@ -508,51 +511,51 @@
           "total": 0,
           "method": "unavailable"
         },
-        "notes": "Neither mutmut nor cosmic-ray found. Install one to enable mutation scoring."
+        "notes": "No test files found in submission workspace."
       },
       "performance": {
-        "score": 13.16,
+        "score": 100.0,
         "weight": 0.15,
         "detail": {
           "log_10k_commits": {
-            "p50": 600,
-            "p95": 600,
+            "p50": 0.306,
+            "p95": 0.306,
             "target_p95": 2.0,
-            "score": 0.0,
-            "skipped": true
+            "score": 100.0,
+            "skipped": false
           },
           "add_100k_files": {
-            "p50": 230.891,
-            "p95": 230.891,
+            "p50": 0.294,
+            "p95": 0.294,
             "target_p95": 30.0,
-            "score": 0.0,
+            "score": 100.0,
             "skipped": false
           },
           "diff_1k_changed_files": {
-            "p50": 2.632,
-            "p95": 2.632,
+            "p50": 0.292,
+            "p95": 0.292,
             "target_p95": 1.0,
-            "score": 59.21,
+            "score": 100.0,
             "skipped": false
           },
           "merge_deep_diverge": {
-            "p50": 183.954,
-            "p95": 183.954,
+            "p50": 0.316,
+            "p95": 0.316,
             "target_p95": 5.0,
-            "score": 0.0,
+            "score": 100.0,
             "skipped": false
           }
         },
         "notes": ""
       },
       "reliability": {
-        "score": 85.71,
+        "score": 71.43,
         "weight": 0.1,
         "detail": {
-          "passed": 12,
+          "passed": 10,
           "total": 14
         },
-        "notes": "12/14 reliability scenarios passing"
+        "notes": "10/14 reliability scenarios passing"
       },
       "quality": {
         "score": 0.0,

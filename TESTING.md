@@ -317,10 +317,10 @@ cd leaderboard && python -m http.server 8080
 
 | Score | What it means | Real examples |
 |-------|---------------|---------------|
-| 85–100 | Near-perfect. All tiers, adversarial handled, writes tests, fast. | — |
-| 70–85 | Strong. Core solid, most edge cases, good performance. | **gpt-5.4: 83.4**, gpt-5.3-codex: 80.6, gemini-2.5-pro: 80.2 |
-| 55–70 | Competent. All commands present, some perf or quality gaps. | **claude-opus-4-6: 73.6** |
+| 85–100 | Near-perfect. All tiers, adversarial handled, writes tests, fast, extends cleanly. | — |
+| 70–85 | Strong. Core solid, edge cases handled, good performance. | **gemini-2.5-pro: 79.9, gpt-5.4: 79.3, gpt-5.3-codex: 78.7, claude-opus-4-6: 76.1** |
+| 55–70 | Competent. All commands present, some perf or quality gaps. | — |
 | 30–55 | Partial. Tier 1 works, Tier 2 rough, Tier 3 gaps. | — |
 | < 30 | Broken. Core implementation bug stops most tests. | **gemini-2.5-flash: 7.3** |
 
-The differentiation between strong models (70–85) comes down to: does the model write its own tests (mutation kill rate), and is the implementation fast (performance benchmarks)? gpt-5.4 leads because it does both. Claude scores highest on code quality but is slow. Gemini 2.5 Flash's failure is a real struct packing bug in its generated code — the harness caught it.
+All capable models cluster 76–80. Differentiation comes from performance benchmarks (OpenAI/Gemini: 100, Claude: 35), mutation kill rate (Claude: 100%, others vary), and code quality judge scores (Claude: 72.8, gpt-5.4: 60.5, others lower). Extension is a real second-prompt round — all models implement remote add/list/remove but none yet implement fetch/push/pull.

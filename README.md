@@ -60,17 +60,17 @@ Seven dimensions, all automated:
 
 All scores are from actual API calls, actual generated code, actual test runs — including private held-out tests:
 
-| Model | Score | Functional | Adversarial | Mutation | Performance | Quality | Cost |
-|-------|-------|-----------|-------------|----------|-------------|---------|------|
-| gpt-5.4 | **83.4/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill | 100/100 | 65.5/100 | $0.15 |
-| gpt-5.3-codex | **80.6/100** ✓ | 70/72 (97%) | 146/166 (88%) | — (no tests) | 100/100 | 45.1/100 | $0.05 |
-| gemini-2.5-pro | **80.2/100** ✓ | 70/72 (97%) | 146/166 (88%) | — (no tests) | 100/100 | 40.7/100 | $0.14 |
-| claude-opus-4-6 | **73.6/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill | 35.4/100 | 72.8/100 | $2.01 |
-| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | — | 0/100 | — | $0.02 |
+| Model | Score | Functional | Adversarial | Extension | Mutation | Performance | Quality | Cost |
+|-------|-------|-----------|-------------|-----------|----------|-------------|---------|------|
+| gemini-2.5-pro | **79.9/100** ✓ | 70/72 (97%) | 146/166 (88%) | 4/16 | — | 100/100 | 37.3/100 | $0.14 |
+| gpt-5.4 | **79.3/100** ✓ | 70/72 (97%) | 146/166 (88%) | 4/16 | 63.8% | 100/100 | 60.5/100 | $0.15 |
+| gpt-5.3-codex | **78.7/100** ✓ | 70/72 (97%) | 146/166 (88%) | 4/16 | — | 100/100 | 26.0/100 | $0.04 |
+| claude-opus-4-6 | **76.1/100** ✓ | 70/72 (97%) | 146/166 (88%) | 4/16 | 100% | 35.4/100 | 72.8/100 | $1.40 |
+| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | — | — | 0/100 | — | $0.02 |
 
-✓ = scored with private held-out tests included
+✓ = scored with private held-out tests included. Extension = second-prompt delta test (agent given 15 min to add remote operations after initial submission).
 
-What the data shows: gpt-5.4 leads by writing its own tests (100% mutation kill rate) *and* being fast (100/100 performance). Claude has the best code quality score (72.8) but is dramatically slower on performance benchmarks. Gemini 2.5 Flash's 0% functional score is a real bug in its generated code — a struct packing error crashes `git add`.
+What the data shows: All capable models pass the same functional and adversarial tests — the differentiation is performance, code quality, and mutation kill rate. OpenAI and Gemini are dramatically faster (100/100 performance vs Claude's 35.4). Claude writes the highest quality code (72.8 judge score) and comprehensively tests what it builds (100% mutation kill rate). All models implement `remote add/list/remove` when asked but none yet implement `fetch/push/pull`. Gemini 2.5 Flash's 0% functional score is a real bug in its generated code.
 
 ## Architecture
 
