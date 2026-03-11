@@ -367,7 +367,7 @@ function formatDate(iso) {
 
 function qualityCell(run) {
   if (run.quality_dry_run) {
-    return '<div class="score-bar score-low" title="Quality not scored (dry run — no LLM judge called)">'
+    return '<div class="score-bar" title="Quality not scored (dry run — no LLM judge called)">'
          + '<span class="score-cell" style="color:#94a3b8;font-style:italic">—</span>'
          + '<div class="bar-bg"></div></div>';
   }
@@ -410,12 +410,14 @@ function renderDetail(run) {
   const s = run.scores;
   const dims = s.quality?.detail || {};
 
-  const judgeRows = Object.entries(dims).map(([dim, data]) =>
-    `<div class="dim-score">
-      <span class="dim-name">${dim.replace(/_/g,' ')}</span>
-      <span class="dim-value">${data.score}</span>
-    </div>`
-  ).join('');
+  const judgeRows = run.quality_dry_run
+    ? '<div class="dim-score"><span class="dim-name" style="color:#94a3b8;font-style:italic">Quality not scored (dry run)</span></div>'
+    : Object.entries(dims).map(([dim, data]) =>
+        `<div class="dim-score">
+          <span class="dim-name">${dim.replace(/_/g,' ')}</span>
+          <span class="dim-value">${data.score}</span>
+        </div>`
+      ).join('');
 
   const tiers = s.functional?.detail?.tiers || {};
   const tierRows = Object.entries(tiers).map(([t, d]) =>
