@@ -7,6 +7,7 @@ Returns a weighted score (tier1=40%, tier2=35%, tier3=25%) in [0, 100].
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -150,7 +151,6 @@ def _run_pytest_tier(
         f"--rootdir={tests_root}",
     ]
 
-    import os
     env_extra = {cmd_var: " ".join(impl_cmd)}
     env = {**os.environ, **env_extra}
 
