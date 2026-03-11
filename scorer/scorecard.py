@@ -123,6 +123,9 @@ def _redistribute_na_weight(
     Redistribute the weight of an N/A dimension proportionally to target_dims.
     Modifies weights in-place. The total weight sum is preserved.
     """
+    missing = [d for d in [na_dim] + list(target_dims) if d not in weights]
+    if missing:
+        raise KeyError(f"_redistribute_na_weight: keys not in weights: {missing}")
     na_weight = weights[na_dim]
     if na_weight == 0.0:
         return
