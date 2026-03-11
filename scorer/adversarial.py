@@ -11,7 +11,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from scorer.behavioral import _find_mini_git_cmd, _run_pytest_tier, TierResult
+from scorer.behavioral import _find_cmd, _harness_cmd_var, _run_pytest_tier, TierResult
 
 
 @dataclass
@@ -45,19 +45,19 @@ def run_adversarial(
     harness_path = Path(harness_path)
     tests_root = harness_path / "tests"
     adversarial_path = tests_root / "adversarial"
+    harness_name = harness_path.name
+    cmd_var = _harness_cmd_var(harness_name)
 
     if not adversarial_path.exists():
-        return AdversarialResult(
-            passed=0, failed=0, total=0, survival_rate=0.0, score=0.0,
-        )
+        return AdversarialResult(passed=0, failed=0, total=0, survival_rate=0.0, score=0.0)
 
-    mini_git_cmd = _find_mini_git_cmd(submission_path / "workspace")
+    impl_cmd = _find_cmd(submission_path / "workspace", harness_name)
 
-    # Public adversarial tests
     public_result: TierResult = _run_pytest_tier(
         tier_path=adversarial_path,
         tests_root=tests_root,
-        mini_git_cmd=mini_git_cmd,
+        impl_cmd=impl_cmd,
+        cmd_var=cmd_var,
         python=python,
         timeout=timeout,
     )
@@ -69,13 +69,13 @@ def run_adversarial(
     held_out_total = 0
     verified = False
 
-    # Held-out tests — present only on maintainer machines, never in the public repo
     held_out_path = tests_root / "held-out"
     if held_out_path.exists() and any(held_out_path.glob("test_*.py")):
         ho_result: TierResult = _run_pytest_tier(
             tier_path=held_out_path,
             tests_root=tests_root,
-            mini_git_cmd=mini_git_cmd,
+            impl_cmd=impl_cmd,
+            cmd_var=cmd_var,
             python=python,
             timeout=timeout,
         )
@@ -88,15 +88,9 @@ def run_adversarial(
         print(f"  [held-out] {ho_result.passed}/{ho_result.total} additional adversarial tests passed")
 
     survival_rate = (passed / total * 100) if total > 0 else 0.0
-
     return AdversarialResult(
-        passed=passed,
-        failed=total - passed,
-        total=total,
-        survival_rate=round(survival_rate, 2),
-        score=round(survival_rate, 2),
-        held_out_passed=held_out_passed,
-        held_out_total=held_out_total,
-        verified=verified,
-        failures=failures,
+        passed=passed, failed=total - passed, total=total,
+        survival_rate=round(survival_rate, 2), score=round(survival_rate, 2),
+        held_out_passed=held_out_passed, held_out_total=held_out_total,
+        verified=verified, failures=failures,
     )
