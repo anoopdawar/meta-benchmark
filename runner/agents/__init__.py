@@ -2,12 +2,14 @@ from runner.agents.claude_code import ClaudeCodeAgent
 from runner.agents.manual import ManualAgent
 from runner.agents.anthropic_api import AnthropicAPIAgent
 from runner.agents.gemini_api import GeminiAPIAgent
+from runner.agents.openai_api import OpenAIAPIAgent
 from pathlib import Path
 
 AGENTS: dict[str, type] = {
     "claude-code": ClaudeCodeAgent,
     "claude-api": AnthropicAPIAgent,
     "gemini-api": GeminiAPIAgent,
+    "openai-api": OpenAIAPIAgent,
     "manual": ManualAgent,
 }
 

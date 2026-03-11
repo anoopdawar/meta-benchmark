@@ -101,7 +101,7 @@ def main():
         # Map model name to agent
         model_agent_map = {r["model"]: r["agent"] for r in RUNS}
         runs_to_execute = [
-            {"model": m, "agent": model_agent_map.get(m, "claude-api" if "claude" in m else "gemini-api")}
+            {"model": m, "agent": model_agent_map.get(m, _infer_agent(m))}
             for m in args.models
         ]
 
@@ -160,6 +160,17 @@ def main():
     print()
 
     return 0
+
+
+def _infer_agent(model: str) -> str:
+    """Infer agent type from model name."""
+    if "claude" in model:
+        return "claude-api"
+    if "gemini" in model:
+        return "gemini-api"
+    if any(x in model for x in ["gpt", "o1", "o3", "o4"]):
+        return "openai-api"
+    return "claude-api"
 
 
 def _is_synthetic(entry: dict) -> bool:
