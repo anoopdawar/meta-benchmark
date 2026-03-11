@@ -18,7 +18,7 @@ This is the [CSS Zen Garden](https://csszengarden.com/) for AI coding agents.
 
 A standardized application harness defines *what to build* — a fixed canvas. Agents build against it. Their output is scored on dimensions that actually matter. Results are public and reproducible.
 
-> "claude-opus-4-6 built mini-git with 97% functional completeness, 88% adversarial survival, 100% mutation kill rate on its own tests, and 71% reliability — verified including private held-out tests not in this repo."
+> "gpt-5.4 built mini-git with 97% functional completeness, 88% adversarial survival, 100% mutation kill rate on its own tests, p95 latency under target on every benchmark, and 71% reliability — verified including private held-out tests not in this repo."
 
 That's a precise, reproducible claim. You can verify it. You can compare it. You can beat it.
 
@@ -58,16 +58,19 @@ Seven dimensions, all automated:
 
 ## Real results
 
-Both scores are from actual API calls, actual generated code, actual test runs — including private held-out tests run by the maintainer:
+All scores are from actual API calls, actual generated code, actual test runs — including private held-out tests:
 
-| Model | Score | Functional | Adversarial | Mutation | Reliability | Cost |
-|-------|-------|-----------|-------------|----------|-------------|------|
-| claude-opus-4-6 | **67.2/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill rate | 10/14 (71%) | $2.01 |
-| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | — | 0/14 (0%) | $0.02 |
+| Model | Score | Functional | Adversarial | Mutation | Performance | Quality | Cost |
+|-------|-------|-----------|-------------|----------|-------------|---------|------|
+| gpt-5.4 | **83.4/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill | 100/100 | 65.5/100 | $0.15 |
+| gpt-5.3-codex | **80.6/100** ✓ | 70/72 (97%) | 146/166 (88%) | — (no tests) | 100/100 | 45.1/100 | $0.05 |
+| gemini-2.5-pro | **80.2/100** ✓ | 70/72 (97%) | 146/166 (88%) | — (no tests) | 100/100 | 40.7/100 | $0.14 |
+| claude-opus-4-6 | **73.6/100** ✓ | 70/72 (97%) | 146/166 (88%) | 100% kill | 35.4/100 | 72.8/100 | $2.01 |
+| gemini-2.5-flash | **7.3/100** | 0/72 (0%) | 1/155 (1%) | — | 0/100 | — | $0.02 |
 
 ✓ = scored with private held-out tests included
 
-Gemini's 0% functional score isn't an infrastructure failure — its generated code has a struct packing bug that crashes on `git add`. The harness caught a real flaw.
+What the data shows: gpt-5.4 leads by writing its own tests (100% mutation kill rate) *and* being fast (100/100 performance). Claude has the best code quality score (72.8) but is dramatically slower on performance benchmarks. Gemini 2.5 Flash's 0% functional score is a real bug in its generated code — a struct packing error crashes `git add`.
 
 ## Architecture
 
@@ -95,6 +98,7 @@ meta-benchmark/
     agents/
       anthropic_api.py ← Direct Anthropic API agent (claude-opus-4-6, sonnet, etc.)
       gemini_api.py    ← Direct Gemini API agent (gemini-2.5-flash, pro, etc.)
+      openai_api.py    ← Direct OpenAI API agent (gpt-5.4, gpt-5.3-codex, etc.)
       claude_code.py   ← Claude Code subprocess integration
       README.md        ← Manual submission format (Cursor, Devin, Copilot, etc.)
   scorer/
@@ -150,6 +154,7 @@ See [TESTING.md](TESTING.md) for a complete step-by-step walkthrough.
 |-------|---------------------|-----------------|
 | claude-opus-4-6, claude-sonnet-4-6, etc. | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) → API Keys |
 | gemini-2.5-flash, gemini-2.5-pro, etc. | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API key |
+| gpt-5.4, gpt-5.3-codex, o3, etc. | `OPENAI_META_BENCHMARK_KEY` | [platform.openai.com](https://platform.openai.com) → API Keys |
 
 > **Note:** The `ANTHROPIC_API_KEY` in a Claude Code session is an internal session token. It returns 401 for direct API calls. You need a separate key from the Anthropic console.
 

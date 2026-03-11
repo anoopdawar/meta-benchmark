@@ -83,6 +83,8 @@ Running LLM judge...
 Total score: 67.2/100
 ```
 
+Remove `--dry-run` to run the LLM judge too. With the judge, this submission scores **73.6/100** (quality: 72.8/100).
+
 ---
 
 ## Step 4: Understand the held-out tests
@@ -159,10 +161,20 @@ python run_benchmark.py --models claude-opus-4-6 --dry-run
 pip install google-genai
 export GEMINI_API_KEY=...   # aistudio.google.com → Get API key
 
-python run_benchmark.py --models gemini-2.5-flash --dry-run
+python run_benchmark.py --models gemini-2.5-pro --dry-run
 ```
 
-> `gemini-2.5-pro` requires a paid tier. `gemini-2.5-flash` works on the free tier.
+> `gemini-2.5-pro` requires a paid tier. `gemini-2.5-flash` works on the free tier but scores much lower.
+
+### OpenAI:
+
+```bash
+export OPENAI_META_BENCHMARK_KEY=sk-proj-...   # platform.openai.com → API Keys
+
+python run_benchmark.py --models gpt-5.4 --dry-run
+# or the dedicated coding model:
+python run_benchmark.py --models gpt-5.3-codex --dry-run
+```
 
 ### What happens:
 
@@ -303,12 +315,12 @@ cd leaderboard && python -m http.server 8080
 
 ## Score interpretation
 
-| Score | What it means |
-|-------|---------------|
-| 85–100 | Near-perfect. All tiers, adversarial handled, clean tests, fast. |
-| 70–85 | Strong. Core + branching solid, most edge cases handled. |
-| 55–70 | Competent. All commands present, some edge cases and perf gaps. **(Claude opus-4-6: 67.2)** |
-| 30–55 | Partial. Tier 1 works, Tier 2 rough, Tier 3 gaps. |
-| < 30 | Broken. Core implementation bug stops most tests. **(Gemini 2.5-flash: 7.3)** |
+| Score | What it means | Real examples |
+|-------|---------------|---------------|
+| 85–100 | Near-perfect. All tiers, adversarial handled, writes tests, fast. | — |
+| 70–85 | Strong. Core solid, most edge cases, good performance. | **gpt-5.4: 83.4**, gpt-5.3-codex: 80.6, gemini-2.5-pro: 80.2 |
+| 55–70 | Competent. All commands present, some perf or quality gaps. | **claude-opus-4-6: 73.6** |
+| 30–55 | Partial. Tier 1 works, Tier 2 rough, Tier 3 gaps. | — |
+| < 30 | Broken. Core implementation bug stops most tests. | **gemini-2.5-flash: 7.3** |
 
-The gap between Claude and Gemini isn't about the harness being hard — it's that Gemini's generated code had a struct packing bug (`'I' format requires 0 <= number <= 4294967295`) that crashed on `git add`. The harness caught a real flaw in the generated code.
+The differentiation between strong models (70–85) comes down to: does the model write its own tests (mutation kill rate), and is the implementation fast (performance benchmarks)? gpt-5.4 leads because it does both. Claude scores highest on code quality but is slow. Gemini 2.5 Flash's failure is a real struct packing bug in its generated code — the harness caught it.
