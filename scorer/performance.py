@@ -12,7 +12,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from scorer.behavioral import _find_mini_git_cmd
+from scorer.behavioral import _find_cmd, _harness_cmd_var
 
 
 @dataclass
@@ -42,29 +42,28 @@ def run_performance(
     python: str = sys.executable,
     timeout: int = 600,
 ) -> PerformanceResult:
-    """Run performance benchmarks and compute weighted score."""
     submission_path = Path(submission_path)
     harness_path = Path(harness_path)
+    harness_name = harness_path.name
+    cmd_var = _harness_cmd_var(harness_name)
     tests_root = harness_path / "tests"
     perf_path = tests_root / "performance"
     thresholds_file = perf_path / "thresholds.json"
 
     if not perf_path.exists() or not thresholds_file.exists():
         return PerformanceResult(
-            benchmark_results={},
-            weighted_score=0.0,
+            benchmark_results={}, weighted_score=0.0,
             notes="Performance test directory not found.",
         )
 
     thresholds = json.loads(thresholds_file.read_text())["benchmarks"]
-    mini_git_cmd = _find_mini_git_cmd(submission_path / "workspace")
+    impl_cmd = _find_cmd(submission_path / "workspace", harness_name)
 
-    # Map benchmark files to threshold keys
+    # Discover bench files from thresholds.json "file" field
     bench_files = {
-        "log_10k_commits": perf_path / "bench_log.py",
-        "add_100k_files": perf_path / "bench_add.py",
-        "diff_1k_changed_files": perf_path / "bench_diff.py",
-        "merge_deep_diverge": perf_path / "bench_merge.py",
+        key: perf_path / thresh["file"]
+        for key, thresh in thresholds.items()
+        if "file" in thresh
     }
 
     results: dict[str, BenchmarkResult] = {}
@@ -72,12 +71,8 @@ def run_performance(
     weighted_sum = 0.0
 
     for bench_name, bench_file in bench_files.items():
-        if bench_name not in thresholds:
-            continue
-
         thresh = thresholds[bench_name]
         weight = thresh["weight"]
-
         if not bench_file.exists():
             result = BenchmarkResult(
                 name=bench_name, p50=0, p95=0, p99=0,
@@ -90,12 +85,12 @@ def run_performance(
                 bench_file=bench_file,
                 bench_name=bench_name,
                 harness_tests_root=tests_root,
-                mini_git_cmd=mini_git_cmd,
+                impl_cmd=impl_cmd,
+                cmd_var=cmd_var,
                 thresh=thresh,
                 python=python,
                 timeout=timeout,
             )
-
         results[bench_name] = result
         total_weight += weight
         weighted_sum += result.score * weight
@@ -111,30 +106,28 @@ def _run_benchmark(
     bench_file: Path,
     bench_name: str,
     harness_tests_root: Path,
-    mini_git_cmd: list[str],
+    impl_cmd: list[str],
+    cmd_var: str,
     thresh: dict,
     python: str,
     timeout: int,
+    # backwards compat
+    mini_git_cmd: list[str] | None = None,
 ) -> BenchmarkResult:
-    """Run a single benchmark file and extract timing."""
-    import os
-
+    if mini_git_cmd is not None:
+        impl_cmd = mini_git_cmd
+    import os, time
     cmd = [
-        python, "-m", "pytest",
-        str(bench_file),
+        python, "-m", "pytest", str(bench_file),
         "-v", "--tb=short",
         f"--rootdir={harness_tests_root}",
-        "--timeout=300",
-        "-s",  # Don't capture stdout so timing prints are visible
+        "--timeout=300", "-s",
     ]
-
-    import time
     start = time.perf_counter()
     try:
         proc = subprocess.run(
-            cmd,
-            capture_output=True, text=True, timeout=timeout,
-            env={**os.environ, "MINI_GIT_CMD": " ".join(mini_git_cmd)},
+            cmd, capture_output=True, text=True, timeout=timeout,
+            env={**os.environ, cmd_var: " ".join(impl_cmd)},
         )
         elapsed = time.perf_counter() - start
     except subprocess.TimeoutExpired:
@@ -144,12 +137,8 @@ def _run_benchmark(
             fail_p95=thresh["fail_p95_seconds"],
             score=0.0, skipped=True, skip_reason=f"Timed out after {timeout}s",
         )
-
-    # Extract timing from test output if available
     p50, p95, p99 = _extract_timing(proc.stdout + proc.stderr, elapsed)
-
     score = _compute_score(p95, thresh["target_p95_seconds"], thresh["fail_p95_seconds"])
-
     return BenchmarkResult(
         name=bench_name, p50=round(p50, 3), p95=round(p95, 3), p99=round(p99, 3),
         target_p95=thresh["target_p95_seconds"],
