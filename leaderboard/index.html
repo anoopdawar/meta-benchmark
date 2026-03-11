@@ -365,6 +365,15 @@ function formatDate(iso) {
   catch { return iso; }
 }
 
+function qualityCell(run) {
+  if (run.quality_dry_run) {
+    return '<div class="score-bar score-low" title="Quality not scored (dry run — no LLM judge called)">'
+         + '<span class="score-cell" style="color:#94a3b8;font-style:italic">—</span>'
+         + '<div class="bar-bg"></div></div>';
+  }
+  return scoreBar(run.scores?.quality?.score);
+}
+
 function renderTable(runs) {
   const tbody = document.getElementById('table-body');
   if (!runs.length) {
@@ -387,7 +396,7 @@ function renderTable(runs) {
       <td>${scoreBar(s.mutation?.score)}</td>
       <td>${scoreBar(s.performance?.score)}</td>
       <td>${scoreBar(s.reliability?.score)}</td>
-      <td>${scoreBar(s.quality?.score)}</td>
+      <td>${qualityCell(run)}</td>
       <td class="cost-cell">$${run.cost_usd?.toFixed(2) ?? '—'}</td>
       <td class="date-cell">${formatDate(run.date)}</td>
     </tr>
@@ -447,12 +456,17 @@ function renderDetail(run) {
       </div>
       <div class="detail-card">
         <h3>Score Summary</h3>
-        ${Object.entries(run.scores).map(([dim, d]) =>
-          `<div class="dim-score">
-            <span class="dim-name">${dim}</span>
-            <span class="dim-value">${d.score.toFixed(1)} × ${(d.weight*100).toFixed(0)}%</span>
-          </div>`
-        ).join('')}
+        ${Object.entries(run.scores).map(([dim, d]) => {
+          const isDryRunQuality = dim === 'quality' && run.quality_dry_run;
+          const label = isDryRunQuality ? 'quality (not scored)' : dim;
+          const value = isDryRunQuality
+            ? '<span style="color:#94a3b8;font-style:italic">— (dry run)</span>'
+            : `${d.score.toFixed(1)} × ${(d.weight*100).toFixed(0)}%`;
+          return `<div class="dim-score">
+            <span class="dim-name">${label}</span>
+            <span class="dim-value">${value}</span>
+          </div>`;
+        }).join('')}
         <div class="dim-score" style="border-top:2px solid #e2e8f0;margin-top:4px;padding-top:8px">
           <span class="dim-name" style="font-weight:700">Total</span>
           <span class="dim-value" style="font-size:16px">${run.total_score.toFixed(1)}</span>
