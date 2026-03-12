@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: pip install -e ".[all]"
+
+      - name: Scorer infrastructure tests
+        run: python -m pytest tests/ -v
+
+      - name: CLI smoke test
+        run: |
+          python -m runner.cli list-harnesses
+          python -m runner.cli run --help
+          python -m runner.cli score --help
+
+      - name: Verify README is up to date
+        run: python update_readme.py --check
+
+      - name: Verify imports
+        run: |
+          python -c "from scorer.scorecard import Scorecard"
+          python -c "from scorer.judge import run_judge"
+          python -c "from scorer.mutation import run_mutation"
+          python -c "from runner.agents import get_agent"
+
+  harness-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        harness: [mini-git, mini-redis, mini-sqlite]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[all]"
+
+      - name: Run harness tests against reference submission
+        run: |
+          HARNESS=${{ matrix.harness }}
+          STEM=$(echo $HARNESS | tr '-' '_')
+          VAR="MINI_$(echo $HARNESS | tr '[:lower:]-' '[:upper:]_')_CMD"
+
+          # Find the first tracked submission for this harness
+          SUB=$(ls -d submissions/${HARNESS}-*/workspace/${STEM}.py 2>/dev/null | head -1)
+          if [ -z "$SUB" ]; then
+            echo "No reference submission found for $HARNESS — skipping"
+            exit 0
+          fi
+
+          export ${VAR}="python $(realpath $SUB)"
+          echo "Testing $HARNESS with ${VAR}=$( printenv $VAR )"
+
+          python -m pytest harnesses/${HARNESS}/tests/tier1/ -v --timeout=60
+          python -m pytest harnesses/${HARNESS}/tests/tier2/ -v --timeout=60

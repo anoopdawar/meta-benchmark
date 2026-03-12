@@ -1,0 +1,83 @@
+name: Score Submission
+
+# Triggered manually or by PR that adds files under submissions/
+on:
+  workflow_dispatch:
+    inputs:
+      submission:
+        description: "Submission directory (e.g. submissions/mini-redis-my-model-20260312T...)"
+        required: true
+      harness:
+        description: "Harness name (mini-git, mini-redis, mini-sqlite)"
+        required: true
+
+  pull_request:
+    branches: [main]
+    paths:
+      - "submissions/**/workspace/**"
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    # Only run on PRs if submission files were added
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[all]"
+
+      - name: Detect submissions (PR mode)
+        if: github.event_name == 'pull_request'
+        id: detect
+        run: |
+          # Find submission dirs that have new workspace files in this PR
+          SUBS=$(git diff --name-only origin/main...HEAD | grep "^submissions/.*/workspace/" | cut -d/ -f1-2 | sort -u)
+          if [ -z "$SUBS" ]; then
+            echo "No new submissions found in PR"
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Found submissions:"
+            echo "$SUBS"
+            echo "found=true" >> $GITHUB_OUTPUT
+            echo "submissions<<EOF" >> $GITHUB_OUTPUT
+            echo "$SUBS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Score submissions (PR mode)
+        if: github.event_name == 'pull_request' && steps.detect.outputs.found == 'true'
+        run: |
+          echo "${{ steps.detect.outputs.submissions }}" | while read SUB; do
+            # Infer harness from submission directory name
+            HARNESS=$(echo "$SUB" | sed 's|submissions/||' | sed 's/-[a-z]*-[0-9].*$//' | sed 's/-[a-z]*-[0-9T]*Z$//')
+            echo "=== Scoring $SUB (harness: $HARNESS) ==="
+            python -m runner.cli score --submission "$SUB" --harness "$HARNESS" || true
+          done
+        env:
+          ANTHROPIC_META_BENCHMARK_KEY: ${{ secrets.ANTHROPIC_META_BENCHMARK_KEY }}
+          OPENAI_META_BENCHMARK_KEY: ${{ secrets.OPENAI_META_BENCHMARK_KEY }}
+          GEMINI_META_BENCHMARK_KEY: ${{ secrets.GEMINI_META_BENCHMARK_KEY }}
+
+      - name: Score submission (manual mode)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python -m runner.cli score \
+            --submission "${{ github.event.inputs.submission }}" \
+            --harness "${{ github.event.inputs.harness }}"
+        env:
+          ANTHROPIC_META_BENCHMARK_KEY: ${{ secrets.ANTHROPIC_META_BENCHMARK_KEY }}
+          OPENAI_META_BENCHMARK_KEY: ${{ secrets.OPENAI_META_BENCHMARK_KEY }}
+          GEMINI_META_BENCHMARK_KEY: ${{ secrets.GEMINI_META_BENCHMARK_KEY }}
+
+      - name: Upload scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecards
+          path: submissions/*/scorecard.json

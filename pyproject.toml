@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "meta-benchmark"
 version = "0.1.0"
 description = "Community standard harnesses for benchmarking AI coding agents"
+license = {text = "MIT"}
 requires-python = ">=3.10"
 dependencies = [
     "pytest>=8.0",
