@@ -2,35 +2,40 @@
 LLM Judge scorer — qualitative code quality assessment.
 
 Reads judge/rubric.md and calibration samples, then queries 3 LLM models
-to score the submission on 5 qualitative dimensions. Aggregates scores
-as mean across models with std dev tracking.
+(one per provider: Anthropic, OpenAI, Gemini) to score the submission on
+5 qualitative dimensions defined in the rubric. Aggregates scores as mean
+across models with std dev tracking.
 
-Requires ANTHROPIC_API_KEY to be set. Pass dry_run=True to skip API calls
-(returns 0.0 scores) for pipeline testing without incurring cost.
+Each provider's API key must be set for that judge to participate.
+Pass dry_run=True to skip API calls for pipeline testing.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import statistics
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 
-JUDGE_DIMENSIONS = [
-    "plumbing_porcelain_separation",
-    "object_model_abstraction",
+# Default judge dimensions — used when the rubric doesn't specify them.
+# Each harness rubric defines its own dimensions; these are extracted from
+# the rubric text at runtime (see _extract_dimensions).
+FALLBACK_DIMENSIONS = [
+    "separation_of_concerns",
+    "abstraction_quality",
     "naming_consistency",
     "test_quality",
     "scope_discipline",
 ]
 
-# Default judge models — override via judge_models parameter
+# One judge per provider for independent scoring.
 DEFAULT_JUDGE_MODELS = [
-    "claude-sonnet-4-6",
-    "claude-opus-4-6",
-    "claude-sonnet-4-6",  # Third vote from same model family for now
+    ("anthropic", "claude-sonnet-4-6"),
+    ("openai", "gpt-5.4"),
+    ("gemini", "gemini-2.5-pro"),
 ]
 
 
@@ -55,7 +60,7 @@ class JudgeResult:
 def run_judge(
     submission_path: Path,
     harness_path: Path,
-    judge_models: list[str] | None = None,
+    judge_models: list[tuple[str, str]] | None = None,
     dry_run: bool = False,
 ) -> JudgeResult:
     """
@@ -64,9 +69,8 @@ def run_judge(
     Parameters:
         submission_path: Path to the submission directory
         harness_path: Path to the harness directory (for rubric + calibration)
-        judge_models: List of model IDs to use as judges (default: 3 models)
+        judge_models: List of (provider, model) tuples. Default: one per provider.
         dry_run: If True, return placeholder scores without calling any LLMs.
-                 Use for testing the scoring pipeline.
     """
     submission_path = Path(submission_path)
     harness_path = Path(harness_path)
@@ -74,32 +78,44 @@ def run_judge(
 
     rubric_path = harness_path / "judge" / "rubric.md"
     calibration_path = harness_path / "judge" / "calibration"
+    harness_name = harness_path.name
 
     rubric = rubric_path.read_text(encoding="utf-8") if rubric_path.exists() else ""
+    dimensions = _extract_dimensions(rubric)
     calibration = _load_calibration(calibration_path)
     code_context = _build_code_context(submission_path / "workspace")
 
-    if dry_run or not _llm_available():
-        return _dry_run_result(judge_models)
+    model_labels = [m[1] for m in judge_models]
 
-    # Run judge for each model
-    all_scores: dict[str, list[float]] = {dim: [] for dim in JUDGE_DIMENSIONS}
-    all_reasonings: dict[str, list[str]] = {dim: [] for dim in JUDGE_DIMENSIONS}
+    if dry_run:
+        return _dry_run_result(model_labels, dimensions)
 
-    for model in judge_models:
+    # Filter to models whose provider API key is available
+    available_models = [(p, m) for p, m in judge_models if _provider_available(p)]
+    if not available_models:
+        return _dry_run_result(model_labels, dimensions)
+
+    # Run judge for each available model
+    all_scores: dict[str, list[float]] = {dim: [] for dim in dimensions}
+    all_reasonings: dict[str, list[str]] = {dim: [] for dim in dimensions}
+
+    for provider, model in available_models:
         model_scores = _call_judge_model(
+            provider=provider,
             model=model,
             rubric=rubric,
             calibration=calibration,
             code_context=code_context,
+            harness_name=harness_name,
+            dimensions=dimensions,
         )
-        for dim in JUDGE_DIMENSIONS:
+        for dim in dimensions:
             all_scores[dim].append(model_scores.get(dim, {}).get("score", 0.0))
             all_reasonings[dim].append(model_scores.get(dim, {}).get("reasoning", ""))
 
     # Aggregate: mean across models, with std dev
     dimension_scores: dict[str, DimensionScore] = {}
-    for dim in JUDGE_DIMENSIONS:
+    for dim in dimensions:
         scores = all_scores[dim]
         mean_score = statistics.mean(scores) if scores else 0.0
         std = statistics.stdev(scores) if len(scores) > 1 else 0.0
@@ -117,42 +133,67 @@ def run_judge(
 
     aggregate = statistics.mean(d.score for d in dimension_scores.values())
 
+    used = [m for _, m in available_models]
     return JudgeResult(
         dimension_scores=dimension_scores,
         aggregate_score=round(aggregate, 2),
-        models_used=judge_models,
+        models_used=used,
         calibration_anchored=bool(calibration),
+        notes=f"LLM judge score (models: {', '.join(used)})",
     )
 
 
-def _dry_run_result(judge_models: list[str]) -> JudgeResult:
+def _extract_dimensions(rubric: str) -> list[str]:
+    """
+    Extract dimension names from rubric markdown.
+
+    Looks for '## Dimension N: <Name>' headings and converts to snake_case keys.
+    Falls back to FALLBACK_DIMENSIONS if none found.
+    """
+    pattern = r"##\s+Dimension\s+\d+:\s+(.+)"
+    matches = re.findall(pattern, rubric)
+    if not matches:
+        return FALLBACK_DIMENSIONS
+
+    dimensions = []
+    for name in matches:
+        # "Plumbing vs. Porcelain Separation" -> "plumbing_vs_porcelain_separation"
+        key = re.sub(r"[^a-zA-Z0-9\s]", "", name).strip().lower()
+        key = re.sub(r"\s+", "_", key)
+        dimensions.append(key)
+    return dimensions
+
+
+def _dry_run_result(model_labels: list[str], dimensions: list[str]) -> JudgeResult:
     """Return placeholder scores for dry runs and testing."""
     dimension_scores = {
         dim: DimensionScore(
             dimension=dim,
             score=0.0,
             reasoning="[dry_run: LLM not called]",
-            model_scores=[0.0] * len(judge_models),
+            model_scores=[0.0] * len(model_labels),
         )
-        for dim in JUDGE_DIMENSIONS
+        for dim in dimensions
     }
     return JudgeResult(
         dimension_scores=dimension_scores,
         aggregate_score=0.0,
-        models_used=judge_models,
+        models_used=model_labels,
         calibration_anchored=False,
         notes="dry_run=True: no LLM calls made. Run with dry_run=False for real scoring.",
     )
 
 
-def _llm_available() -> bool:
-    """Check if an LLM API is available for judge calls."""
+def _provider_available(provider: str) -> bool:
+    """Check if the given provider's API key is set."""
     import os
-    return bool(
-        os.environ.get("ANTHROPIC_META_BENCHMARK_KEY")
-        or os.environ.get("ANTHROPIC_API_KEY")
-        or os.environ.get("OPENAI_API_KEY")
-    )
+    if provider == "anthropic":
+        return bool(os.environ.get("ANTHROPIC_META_BENCHMARK_KEY") or os.environ.get("ANTHROPIC_API_KEY"))
+    if provider == "openai":
+        return bool(os.environ.get("OPENAI_META_BENCHMARK_KEY") or os.environ.get("OPENAI_API_KEY"))
+    if provider == "gemini":
+        return bool(os.environ.get("GEMINI_META_BENCHMARK_KEY") or os.environ.get("GEMINI_API_KEY"))
+    return False
 
 
 def _load_calibration(calibration_path: Path) -> dict[str, Any]:
@@ -179,28 +220,25 @@ def _build_code_context(workspace: Path) -> str:
     total_chars = 0
     max_chars = 40_000  # ~10k tokens
 
-    # Exclude mutation artifacts directory entirely
     def _is_source(p: Path) -> bool:
         return "mutants" not in p.parts and "test" not in p.name.lower()
 
     def _is_test(p: Path) -> bool:
         return "mutants" not in p.parts and "test" in p.name.lower()
 
-    # Source files first (sorted by size descending — largest is usually the main impl)
     src_files = sorted(
         [p for p in workspace.rglob("*.py") if _is_source(p)],
         key=lambda p: p.stat().st_size,
         reverse=True,
     )
-    # Test files second
     test_files = sorted(
         [p for p in workspace.rglob("*.py") if _is_test(p)],
         key=lambda p: p.stat().st_size,
         reverse=True,
     )
 
-    src_budget = int(max_chars * 0.70)  # 28k chars for source
-    test_budget = max_chars - src_budget  # 12k chars for tests
+    src_budget = int(max_chars * 0.70)
+    test_budget = max_chars - src_budget
 
     for f in src_files[:10]:
         if total_chars >= src_budget:
@@ -231,41 +269,90 @@ def _build_code_context(workspace: Path) -> str:
 
 
 def _call_judge_model(
+    provider: str,
     model: str,
     rubric: str,
     calibration: dict[str, Any],
     code_context: str,
+    harness_name: str,
+    dimensions: list[str],
 ) -> dict[str, dict[str, Any]]:
     """
     Call a judge LLM model and return per-dimension scores.
 
+    Routes to the correct provider SDK based on the provider parameter.
     Returns dict: {dimension_name: {"score": float, "reasoning": str}}
-
-    This is the integration point for actual LLM API calls.
-    Current implementation uses the Anthropic SDK if available.
     """
-    prompt = _build_judge_prompt(rubric, calibration, code_context)
+    prompt = _build_judge_prompt(rubric, calibration, code_context, harness_name, dimensions)
 
-    # Try Anthropic SDK
+    if provider == "anthropic":
+        return _call_anthropic(model, prompt, dimensions)
+    elif provider == "openai":
+        return _call_openai(model, prompt, dimensions)
+    elif provider == "gemini":
+        return _call_gemini(model, prompt, dimensions)
+
+    return {dim: {"score": 0.0, "reasoning": f"Unknown provider: {provider}"} for dim in dimensions}
+
+
+def _call_anthropic(model: str, prompt: str, dimensions: list[str]) -> dict[str, dict[str, Any]]:
+    """Call Anthropic API."""
     try:
-        import os as _os
+        import os
         import anthropic
-        _api_key = _os.environ.get("ANTHROPIC_META_BENCHMARK_KEY") or _os.environ.get("ANTHROPIC_API_KEY")
-        client = anthropic.Anthropic(api_key=_api_key)
+        api_key = os.environ.get("ANTHROPIC_META_BENCHMARK_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+        client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
             model=model,
             max_tokens=2000,
             messages=[{"role": "user", "content": prompt}],
         )
-        return _parse_judge_response(message.content[0].text)
-    except (ImportError, Exception):
-        pass
-
-    # Return zeros if no LLM available
-    return {dim: {"score": 0.0, "reasoning": "LLM unavailable"} for dim in JUDGE_DIMENSIONS}
+        return _parse_judge_response(message.content[0].text, dimensions)
+    except Exception:
+        return {dim: {"score": 0.0, "reasoning": "Anthropic API call failed"} for dim in dimensions}
 
 
-def _build_judge_prompt(rubric: str, calibration: dict, code_context: str) -> str:
+def _call_openai(model: str, prompt: str, dimensions: list[str]) -> dict[str, dict[str, Any]]:
+    """Call OpenAI API."""
+    try:
+        import os
+        import openai
+        api_key = os.environ.get("OPENAI_META_BENCHMARK_KEY") or os.environ.get("OPENAI_API_KEY")
+        client = openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return _parse_judge_response(response.choices[0].message.content, dimensions)
+    except Exception:
+        return {dim: {"score": 0.0, "reasoning": "OpenAI API call failed"} for dim in dimensions}
+
+
+def _call_gemini(model: str, prompt: str, dimensions: list[str]) -> dict[str, dict[str, Any]]:
+    """Call Gemini API."""
+    try:
+        import os
+        from google import genai
+        api_key = os.environ.get("GEMINI_META_BENCHMARK_KEY") or os.environ.get("GEMINI_API_KEY")
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(max_output_tokens=2000),
+        )
+        return _parse_judge_response(response.text, dimensions)
+    except Exception:
+        return {dim: {"score": 0.0, "reasoning": "Gemini API call failed"} for dim in dimensions}
+
+
+def _build_judge_prompt(
+    rubric: str,
+    calibration: dict,
+    code_context: str,
+    harness_name: str,
+    dimensions: list[str],
+) -> str:
     """Build the judge prompt with rubric, calibration anchors, and code."""
     cal_examples = ""
     for sample in calibration.get("samples", []):
@@ -273,7 +360,11 @@ def _build_judge_prompt(rubric: str, calibration: dict, code_context: str) -> st
         for dim, data in sample.get("human_scores", {}).items():
             cal_examples += f"  {dim}: {data['score']}/100 — {data['reasoning']}\n"
 
-    return f"""You are an expert code quality judge evaluating a mini-git implementation.
+    dim_format = ""
+    for dim in dimensions:
+        dim_format += f'  "{dim}": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}},\n'
+
+    return f"""You are an expert code quality judge evaluating a {harness_name} implementation.
 
 ## Scoring Rubric
 
@@ -289,33 +380,41 @@ def _build_judge_prompt(rubric: str, calibration: dict, code_context: str) -> st
 
 ## Task
 
-Score this implementation on each of the 5 dimensions using the rubric above.
+Score this implementation on each dimension defined in the rubric above.
 Respond with ONLY a JSON object in this exact format:
 
 {{
-  "plumbing_porcelain_separation": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}},
-  "object_model_abstraction": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}},
-  "naming_consistency": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}},
-  "test_quality": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}},
-  "scope_discipline": {{"score": <0-100>, "reasoning": "<1-2 sentences>"}}
-}}"""
+{dim_format}}}"""
 
 
-def _parse_judge_response(response: str) -> dict[str, dict[str, Any]]:
-    """Parse the judge's JSON response."""
-    import re
-    # Extract JSON block
+def _parse_judge_response(response: str, dimensions: list[str]) -> dict[str, dict[str, Any]]:
+    """Parse the judge's JSON response, matching dimension keys flexibly."""
     match = re.search(r"\{.*\}", response, re.DOTALL)
     if not match:
-        return {dim: {"score": 0.0, "reasoning": "Parse error"} for dim in JUDGE_DIMENSIONS}
+        return {dim: {"score": 0.0, "reasoning": "Parse error"} for dim in dimensions}
     try:
         data = json.loads(match.group())
-        return {
-            dim: {
-                "score": float(data.get(dim, {}).get("score", 0)),
-                "reasoning": str(data.get(dim, {}).get("reasoning", "")),
+
+        # Build a lookup from normalized keys to original keys in the response
+        response_keys = {}
+        for key in data:
+            normalized = re.sub(r"[^a-z0-9]", "", key.lower())
+            response_keys[normalized] = key
+
+        result = {}
+        for dim in dimensions:
+            normalized_dim = re.sub(r"[^a-z0-9]", "", dim.lower())
+            # Try exact match first, then normalized match
+            if dim in data:
+                entry = data[dim]
+            elif normalized_dim in response_keys:
+                entry = data[response_keys[normalized_dim]]
+            else:
+                entry = {"score": 0.0, "reasoning": "Dimension not found in response"}
+            result[dim] = {
+                "score": float(entry.get("score", 0)),
+                "reasoning": str(entry.get("reasoning", "")),
             }
-            for dim in JUDGE_DIMENSIONS
-        }
+        return result
     except (json.JSONDecodeError, TypeError, ValueError):
-        return {dim: {"score": 0.0, "reasoning": "Parse error"} for dim in JUDGE_DIMENSIONS}
+        return {dim: {"score": 0.0, "reasoning": "Parse error"} for dim in dimensions}
