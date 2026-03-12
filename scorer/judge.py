@@ -321,7 +321,7 @@ def _call_openai(model: str, prompt: str, dimensions: list[str]) -> dict[str, di
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
             model=model,
-            max_tokens=2000,
+            max_completion_tokens=2000,
             messages=[{"role": "user", "content": prompt}],
         )
         return _parse_judge_response(response.choices[0].message.content, dimensions)
@@ -339,11 +339,17 @@ def _call_gemini(model: str, prompt: str, dimensions: list[str]) -> dict[str, di
         response = client.models.generate_content(
             model=model,
             contents=prompt,
-            config=genai.types.GenerateContentConfig(max_output_tokens=2000),
+            config=genai.types.GenerateContentConfig(max_output_tokens=16000),
         )
-        return _parse_judge_response(response.text, dimensions)
-    except Exception:
-        return {dim: {"score": 0.0, "reasoning": "Gemini API call failed"} for dim in dimensions}
+        text = response.text or ""
+        if not text and response.candidates:
+            # Some Gemini models return content in parts
+            parts = response.candidates[0].content.parts
+            if parts:
+                text = parts[0].text or ""
+        return _parse_judge_response(text, dimensions)
+    except Exception as e:
+        return {dim: {"score": 0.0, "reasoning": f"Gemini API call failed: {e}"} for dim in dimensions}
 
 
 def _build_judge_prompt(
@@ -389,11 +395,22 @@ Respond with ONLY a JSON object in this exact format:
 
 def _parse_judge_response(response: str, dimensions: list[str]) -> dict[str, dict[str, Any]]:
     """Parse the judge's JSON response, matching dimension keys flexibly."""
+    # Strip markdown code fences if present
+    response = re.sub(r"^```(?:json)?\s*", "", response.strip())
+    response = re.sub(r"\s*```\s*$", "", response.strip())
     match = re.search(r"\{.*\}", response, re.DOTALL)
     if not match:
         return {dim: {"score": 0.0, "reasoning": "Parse error"} for dim in dimensions}
     try:
         data = json.loads(match.group())
+
+        # Some models wrap dimensions in a nested key (e.g. {"dimensions": {...}})
+        if "dimensions" in data and isinstance(data["dimensions"], dict):
+            data = data["dimensions"]
+        elif len(data) == 1:
+            only_key = next(iter(data))
+            if isinstance(data[only_key], dict):
+                data = data[only_key]
 
         # Build a lookup from normalized keys to original keys in the response
         response_keys = {}
