@@ -1,0 +1,155 @@
+{
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-git-claude-opus-4-6-live",
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "date": "2026-03-10T00:00:00Z",
+  "scores": {
+    "functional": {
+      "score": 96.84,
+      "weight": 0.35,
+      "detail": {
+        "total_passed": 70,
+        "total_tests": 72,
+        "tiers": {
+          "tier1": {
+            "passed": 34,
+            "total": 34,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 22,
+            "score": 95.45
+          },
+          "tier3": {
+            "passed": 15,
+            "total": 16,
+            "score": 93.75
+          }
+        }
+      },
+      "notes": "70/72 tests passing"
+    },
+    "adversarial": {
+      "score": 87.74,
+      "weight": 0.2,
+      "detail": {
+        "passed": 136,
+        "total": 155,
+        "survival_rate": 87.74
+      },
+      "notes": "136/155 edge cases survived"
+    },
+    "extension": {
+      "score": 25.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 4,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "4/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "Neither mutmut nor cosmic-ray found. Install one to enable mutation scoring."
+    },
+    "performance": {
+      "score": 35.14,
+      "weight": 0.15,
+      "detail": {
+        "log_10k_commits": {
+          "p50": 600,
+          "p95": 600,
+          "target_p95": 2.0,
+          "score": 0.0,
+          "skipped": true
+        },
+        "add_100k_files": {
+          "p50": 43.814,
+          "p95": 43.814,
+          "target_p95": 30.0,
+          "score": 84.65,
+          "skipped": false
+        },
+        "diff_1k_changed_files": {
+          "p50": 2.907,
+          "p95": 2.907,
+          "target_p95": 1.0,
+          "score": 52.32,
+          "skipped": false
+        },
+        "merge_deep_diverge": {
+          "p50": 204.426,
+          "p95": 204.426,
+          "target_p95": 5.0,
+          "score": 0.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 71.43,
+      "weight": 0.1,
+      "detail": {
+        "passed": 10,
+        "total": 14
+      },
+      "notes": "10/14 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 72.8,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 81.7,
+          "reasoning": "Clear plumbing layer (write_object, read_object, make_tree, read_tree, make_commit, read_commit) with commands delegating to these. Minor violations in cmd_merge (inline commit construction) and cmd_checkout (direct HEAD write)."
+        },
+        "object_model_abstraction": {
+          "score": 58.3,
+          "reasoning": "Commit and TreeEntry dataclasses exist, but no class-based serialize/deserialize methods \u2014 serialization logic is in standalone functions. Blob has no abstraction."
+        },
+        "naming_consistency": {
+          "score": 83.3,
+          "reasoning": "Highly consistent: cmd_* for commands, verb_noun for plumbing, sha for digests. Minor asymmetry: make_commit/make_tree vs read_commit/read_tree."
+        },
+        "test_quality": {
+          "score": 70.7,
+          "reasoning": "Tests verify real behavior: SHA1 format, zlib compression, deduplication, corrupt objects, binary files, parent linkage, log ordering. Missing: unicode filenames, files with spaces, empty repo edge cases."
+        },
+        "scope_discipline": {
+          "score": 70.0,
+          "reasoning": "Covers init/add/commit/log/status/branch plus merge/diff/reset/stash. File truncated mid-function (cmd_checkout). .gitignore support and three-way-merge are reasonable extensions."
+        }
+      },
+      "notes": "LLM judge (claude-sonnet-4-6, claude-opus-4-6 \u00d7 3 models)"
+    }
+  },
+  "total_score": 73.64,
+  "metadata": {
+    "model": "claude-opus-4-6",
+    "agent_framework": "claude-api",
+    "agent_framework_version": "1.0.0",
+    "scaffolding_config": {},
+    "date": "2026-03-10T00:00:00Z",
+    "harness": "mini-git",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 47.3,
+    "tokens_input": 3200,
+    "tokens_output": 18500,
+    "cost_usd": 1.4325,
+    "exit_code": 0,
+    "notes": "Direct implementation by claude-opus-4-6 in-session"
+  },
+  "report": "# Scorecard: mini-git \u2014 claude-opus-4-6\nDate: 2026-03-10T00:00:00Z\nAgent framework: claude-api\n\n## Total Score: 66.4/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  96.8     35%      33.9\nadversarial                 87.7     20%      17.5\nextension                   25.0     10%       2.5\nmutation                     0.0      0%       0.0\nperformance                 35.1     15%       5.3\nreliability                 71.4     10%       7.1\nquality                      0.0     10%       0.0\n\n## Notes\n- **functional**: 70/72 tests passing\n- **adversarial**: 136/155 edge cases survived\n- **extension**: 4/16 extension tests passing\n- **mutation**: Neither mutmut nor cosmic-ray found. Install one to enable mutation scoring.\n- **reliability**: 10/14 reliability scenarios passing\n- **quality**: dry_run=True: no LLM calls made. Run with dry_run=False for real scoring."
+}
