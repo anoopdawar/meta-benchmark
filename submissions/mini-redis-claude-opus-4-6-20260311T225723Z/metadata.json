@@ -1,0 +1,15 @@
+{
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "agent_framework_version": "unknown",
+  "scaffolding_config": {},
+  "date": "2026-03-11T22:58:26.287491+00:00",
+  "harness": "mini-redis",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 63.009,
+  "tokens_input": 1707,
+  "tokens_output": 6797,
+  "cost_usd": 0.5354,
+  "exit_code": 0,
+  "notes": ""
+}

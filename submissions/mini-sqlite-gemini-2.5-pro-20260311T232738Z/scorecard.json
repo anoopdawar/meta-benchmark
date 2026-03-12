@@ -1,0 +1,151 @@
+{
+  "harness": "mini-sqlite",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-sqlite-gemini-2.5-pro-20260311T232738Z",
+  "model": "gemini-2.5-pro",
+  "agent_framework": "gemini-api",
+  "date": "2026-03-11T23:30:24.971568+00:00",
+  "scores": {
+    "functional": {
+      "score": 75.72,
+      "weight": 0.35454545454545455,
+      "detail": {
+        "total_passed": 46,
+        "total_tests": 65,
+        "tiers": {
+          "tier1": {
+            "passed": 21,
+            "total": 21,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 18,
+            "total": 23,
+            "score": 78.26
+          },
+          "tier3": {
+            "passed": 7,
+            "total": 21,
+            "score": 33.33
+          }
+        }
+      },
+      "notes": "46/65 tests passing"
+    },
+    "adversarial": {
+      "score": 70.0,
+      "weight": 0.17727272727272728,
+      "detail": {
+        "passed": 21,
+        "total": 30,
+        "survival_rate": 70.0,
+        "held_out_passed": 0,
+        "held_out_total": 0,
+        "verified": false
+      },
+      "notes": "21/30 edge cases survived"
+    },
+    "extension": {
+      "score": 0.0,
+      "weight": 0.1181818181818182,
+      "detail": {
+        "passed": 0,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "0/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "select_1k_rows": {
+          "p50": 0.036,
+          "p95": 0.038,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "insert_100_rows": {
+          "p50": 3.525,
+          "p95": 3.76,
+          "target_p95": 5.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "join_1k_rows": {
+          "p50": 0.033,
+          "p95": 0.036,
+          "target_p95": 3.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 85.71,
+      "weight": 0.1,
+      "detail": {
+        "passed": 6,
+        "total": 7
+      },
+      "notes": "6/7 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 53.48,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 57.7,
+          "reasoning": "Clear layered architecture with Tokenizer \u2192 Parser \u2192 ExecutionEngine \u2192 StorageEngine pipeline, each independently defined. Minor tangling exists where ExecutionEngine reads schema details to construct contexts, but overall the separation is exemplary."
+        },
+        "object_model_abstraction": {
+          "score": 56.7,
+          "reasoning": "Full AST with named namedtuples for every statement and expression type, typed literals, proper expression trees with BinOp/UnaryOp/IsNullExpr, and a clean row model as typed lists with schema metadata. Storage is swappable via the StorageEngine abstraction."
+        },
+        "naming_consistency": {
+          "score": 84.0,
+          "reasoning": "Extremely consistent naming throughout: parse_* methods in Parser, _execute_* dispatch in ExecutionEngine, _op closures in StorageEngine. AST node names match their SQL counterparts cleanly."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No tests are present in the provided implementation \u2014 the file contains only the implementation code with no test suite, assertions, or test infrastructure whatsoever."
+        },
+        "scope_discipline": {
+          "score": 69.0,
+          "reasoning": "The implementation covers a broad and impressive scope (CREATE, DROP, INSERT, SELECT with JOINs/GROUP BY/HAVING/ORDER BY/LIMIT/OFFSET, UPDATE, DELETE, transactions, NULL handling) with no sqlite3 import, but the file is truncated mid-implementation (LEFT JOIN logic cuts off), making it impossible to confirm full feature completeness."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 68.17,
+  "metadata": {
+    "model": "gemini-2.5-pro",
+    "agent_framework": "gemini-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T23:30:24.971568+00:00",
+    "harness": "mini-sqlite",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 166.748,
+    "tokens_input": 1072,
+    "tokens_output": 11366,
+    "cost_usd": 0.115,
+    "exit_code": 0,
+    "notes": ""
+  },
+  "report": "# Scorecard: mini-sqlite \u2014 gemini-2.5-pro\nDate: 2026-03-11T23:30:24.971568+00:00\nAgent framework: gemini-api\n\n## Total Score: 68.2/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  75.7     35%      26.8\nadversarial                 70.0     18%      12.4\nextension                    0.0     12%       0.0\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                 85.7     10%       8.6\nquality                     53.5     10%       5.3\n\n## Notes\n- **functional**: 46/65 tests passing\n- **adversarial**: 21/30 edge cases survived\n- **extension**: 0/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 6/7 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

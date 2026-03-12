@@ -1,0 +1,157 @@
+{
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-git-gemini-2-5-pro-20260311T111218Z",
+  "model": "gemini-2.5-pro",
+  "agent_framework": "gemini-api",
+  "date": "2026-03-11T11:14:56.750867+00:00",
+  "scores": {
+    "functional": {
+      "score": 96.84,
+      "weight": 0.35,
+      "detail": {
+        "total_passed": 70,
+        "total_tests": 72,
+        "tiers": {
+          "tier1": {
+            "passed": 34,
+            "total": 34,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 22,
+            "score": 95.45
+          },
+          "tier3": {
+            "passed": 15,
+            "total": 16,
+            "score": 93.75
+          }
+        }
+      },
+      "notes": "70/72 tests passing"
+    },
+    "adversarial": {
+      "score": 87.95,
+      "weight": 0.2,
+      "detail": {
+        "passed": 146,
+        "total": 166,
+        "survival_rate": 87.95,
+        "held_out_passed": 10,
+        "held_out_total": 11,
+        "verified": true
+      },
+      "notes": "146/166 edge cases survived [maintainer-verified]"
+    },
+    "extension": {
+      "score": 25.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 4,
+        "total": 16,
+        "phase": "live_agent"
+      },
+      "notes": "4/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "log_10k_commits": {
+          "p50": 0.292,
+          "p95": 0.292,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "add_100k_files": {
+          "p50": 0.291,
+          "p95": 0.291,
+          "target_p95": 30.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "diff_1k_changed_files": {
+          "p50": 0.303,
+          "p95": 0.303,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "merge_deep_diverge": {
+          "p50": 0.293,
+          "p95": 0.293,
+          "target_p95": 5.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 71.43,
+      "weight": 0.1,
+      "detail": {
+        "passed": 10,
+        "total": 14
+      },
+      "notes": "10/14 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 37.32,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 58.3,
+          "reasoning": "There is a recognizable plumbing layer \u2014 `hash_object`, `read_object`, `read_index`, `write_index`, `update_ref`, `get_ref`, `write_tree` \u2014 and command handlers delegate to these functions rather than inlining SHA1 computation or file I/O directly. However, the separation is incomplete: `cmd_commit` builds the commit text format inline rather than through a dedicated `write_commit` plumbing function, and `cmd_pull` contains an inline nested `checkout_tree` function that mixes tree traversal logic with file I/O directly in the command handler."
+        },
+        "object_model_abstraction": {
+          "score": 23.3,
+          "reasoning": "There are no Blob, Tree, or Commit classes or structured representations. hash_object and read_object handle the header format centrally, which is good, but tree entry parsing is duplicated in concept (write_tree builds entries one way, get_tree_entries parses them). Commit data is constructed as raw string concatenation in cmd_commit with no commit abstraction, and parsed ad-hoc via string splitting in cmd_log and iter_commits_and_parents."
+        },
+        "naming_consistency": {
+          "score": 66.7,
+          "reasoning": "Naming is mostly consistent \u2014 `sha1` is used uniformly, command handlers follow `cmd_*` naming, and helper functions have clear names. There are some minor inconsistencies: `hash_object` is both a plumbing concept and used as a verb (vs. noun-style `create_blob`), and the index entry namedtuple field `sha1` stores a hex string while `sha1_bytes` is a local variable, creating minor conceptual confusion, but overall readability is good."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No test file is present in the submission \u2014 there are no tests at all to evaluate."
+        },
+        "scope_discipline": {
+          "score": 38.3,
+          "reasoning": "The implementation adds several out-of-scope features (`remote`, `fetch`, `pull`, `push`) that are typically considered networking/remote features beyond a basic mini-git, while simultaneously registering stub commands (`checkout`, `branch`, `merge`, `status`, `hash-object`, `cat-file`, `write-tree`) that print error messages rather than implementing requested functionality. The stub commands represent a significant portion of a typical mini-git spec being silently skipped, and the remote networking additions are clearly out-of-scope feature creep."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 79.86,
+  "metadata": {
+    "model": "gemini-2.5-pro",
+    "agent_framework": "gemini-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T11:14:56.750867+00:00",
+    "harness": "mini-git",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 158.588,
+    "tokens_input": 1771,
+    "tokens_output": 13894,
+    "cost_usd": 0.1412,
+    "exit_code": 0
+  },
+  "report": "# Scorecard: mini-git \u2014 gemini-2.5-pro\nDate: 2026-03-11T11:14:56.750867+00:00\nAgent framework: gemini-api\n\n## Total Score: 79.9/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  96.8     35%      33.9\nadversarial                 88.0     20%      17.6\nextension                   25.0     10%       2.5\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                 71.4     10%       7.1\nquality                     37.3     10%       3.7\n\n## Notes\n- **functional**: 70/72 tests passing\n- **adversarial**: 146/166 edge cases survived [maintainer-verified]\n- **extension**: 4/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 10/14 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

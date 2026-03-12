@@ -1,0 +1,157 @@
+{
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-git-gpt-5-3-codex-20260311T112303Z",
+  "model": "gpt-5.3-codex",
+  "agent_framework": "openai-api",
+  "date": "2026-03-11T11:23:36.170833+00:00",
+  "scores": {
+    "functional": {
+      "score": 96.84,
+      "weight": 0.35,
+      "detail": {
+        "total_passed": 70,
+        "total_tests": 72,
+        "tiers": {
+          "tier1": {
+            "passed": 34,
+            "total": 34,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 22,
+            "score": 95.45
+          },
+          "tier3": {
+            "passed": 15,
+            "total": 16,
+            "score": 93.75
+          }
+        }
+      },
+      "notes": "70/72 tests passing"
+    },
+    "adversarial": {
+      "score": 87.95,
+      "weight": 0.2,
+      "detail": {
+        "passed": 146,
+        "total": 166,
+        "survival_rate": 87.95,
+        "held_out_passed": 10,
+        "held_out_total": 11,
+        "verified": true
+      },
+      "notes": "146/166 edge cases survived [maintainer-verified]"
+    },
+    "extension": {
+      "score": 25.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 4,
+        "total": 16,
+        "phase": "live_agent"
+      },
+      "notes": "4/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "log_10k_commits": {
+          "p50": 0.283,
+          "p95": 0.283,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "add_100k_files": {
+          "p50": 0.289,
+          "p95": 0.289,
+          "target_p95": 30.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "diff_1k_changed_files": {
+          "p50": 0.287,
+          "p95": 0.287,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "merge_deep_diverge": {
+          "p50": 0.29,
+          "p95": 0.29,
+          "target_p95": 5.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 71.43,
+      "weight": 0.1,
+      "detail": {
+        "passed": 10,
+        "total": 14
+      },
+      "notes": "10/14 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 26.0,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 35.0,
+          "reasoning": "There are some helper functions like `read_object`, `write_file`, `sha1_hex`, and ref manipulation utilities, but core git commands like `add`, `commit`, `status`, `log`, and `checkout` are entirely absent. The existing command handlers (`cmd_fetch`, `cmd_push`, `cmd_pull`) mix object copying, ref manipulation, and I/O directly \u2014 for example, `cmd_push` directly writes to the remote ref path rather than delegating to a plumbing abstraction."
+        },
+        "object_model_abstraction": {
+          "score": 15.0,
+          "reasoning": "There is no Blob, Tree, or Commit class or abstraction. The `read_object` function deserializes the raw format and `parse_commit` parses commit content into a dict, but there is no structured object model \u2014 no `serialize()`/`deserialize()` methods, no SHA1 property, and the tree object type is completely unrepresented."
+        },
+        "naming_consistency": {
+          "score": 66.7,
+          "reasoning": "Within the file, naming is reasonably consistent \u2014 `cmd_*` for command handlers, `git_path` for path construction, `read_file`/`write_file` as paired operations, and `oid` consistently for object identifiers. However, there are minor inconsistencies such as `sha1_hex` as a function name vs. using `oid` as the variable name for what is a SHA1 hex string, and `resolve_ref` vs `get_head_commit` having different abstraction levels without clear distinction."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No test files are present in the implementation. There are zero tests of any kind."
+        },
+        "scope_discipline": {
+          "score": 13.3,
+          "reasoning": "The implementation is severely out of scope \u2014 it implements only `init`, `remote`, `fetch`, `pull`, and `push` (networking/remote features) while completely omitting the core requested commands: `add`, `commit`, `status`, `log`, `checkout`, `diff`, and hash-object/cat-file plumbing. The agent built almost exclusively out-of-scope networking infrastructure while skipping the fundamental local git operations."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 78.73,
+  "metadata": {
+    "model": "gpt-5.3-codex",
+    "agent_framework": "openai-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T11:23:36.170833+00:00",
+    "harness": "mini-git",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 32.869,
+    "tokens_input": 1655,
+    "tokens_output": 2468,
+    "cost_usd": 0.0374,
+    "exit_code": 0
+  },
+  "report": "# Scorecard: mini-git \u2014 gpt-5.3-codex\nDate: 2026-03-11T11:23:36.170833+00:00\nAgent framework: openai-api\n\n## Total Score: 78.7/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  96.8     35%      33.9\nadversarial                 88.0     20%      17.6\nextension                   25.0     10%       2.5\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                 71.4     10%       7.1\nquality                     26.0     10%       2.6\n\n## Notes\n- **functional**: 70/72 tests passing\n- **adversarial**: 146/166 edge cases survived [maintainer-verified]\n- **extension**: 4/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 10/14 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

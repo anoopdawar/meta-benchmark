@@ -1,0 +1,151 @@
+{
+  "harness": "mini-redis",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-redis-gemini-2.5-pro-20260311T230915Z",
+  "model": "gemini-2.5-pro",
+  "agent_framework": "gemini-api",
+  "date": "2026-03-11T23:11:00.972053+00:00",
+  "scores": {
+    "functional": {
+      "score": 90.25,
+      "weight": 0.35454545454545455,
+      "detail": {
+        "total_passed": 59,
+        "total_tests": 65,
+        "tiers": {
+          "tier1": {
+            "passed": 15,
+            "total": 17,
+            "score": 88.24
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 23,
+            "score": 91.3
+          },
+          "tier3": {
+            "passed": 23,
+            "total": 25,
+            "score": 92.0
+          }
+        }
+      },
+      "notes": "59/65 tests passing"
+    },
+    "adversarial": {
+      "score": 97.83,
+      "weight": 0.17727272727272728,
+      "detail": {
+        "passed": 45,
+        "total": 46,
+        "survival_rate": 97.83,
+        "held_out_passed": 0,
+        "held_out_total": 0,
+        "verified": false
+      },
+      "notes": "45/46 edge cases survived"
+    },
+    "extension": {
+      "score": 0.0,
+      "weight": 0.1181818181818182,
+      "detail": {
+        "passed": 0,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "0/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "get_10k_keys": {
+          "p50": 0.032,
+          "p95": 0.034,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "lrange_10k_list": {
+          "p50": 0.032,
+          "p95": 0.033,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "hgetall_1k_fields": {
+          "p50": 0.029,
+          "p95": 0.03,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 100.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 8,
+        "total": 8
+      },
+      "notes": "8/8 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 61.88,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 88.7,
+          "reasoning": "RedisStore is cleanly separated from MiniRedisCLI with no printing inside the store layer. CLI is a thin dispatcher that handles formatting and I/O while delegating all logic to the store, making RedisStore independently testable."
+        },
+        "object_model_abstraction": {
+          "score": 54.0,
+          "reasoning": "Python native types are used correctly (dict for hash, list for list, set for set), but the internal representation uses a stringly-typed metadata wrapper {'type': 'string/list/hash/set', 'value': ...} rather than proper data classes or typed containers. The _get_value_and_check_type and _ensure_type_or_create helpers provide some abstraction but the schema is ad hoc."
+        },
+        "naming_consistency": {
+          "score": 87.7,
+          "reasoning": "Naming is highly consistent throughout \u2014 snake_case everywhere, handler methods follow handle_<command> pattern uniformly, store methods mirror Redis command names directly. The _format_* helper pattern is consistent across all output formatting."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No test file is present in the implementation provided. There are zero tests, assertions, or test infrastructure of any kind."
+        },
+        "scope_discipline": {
+          "score": 79.0,
+          "reasoning": "All standard Redis commands covered in the rubric appear implemented (strings, lists, hashes, sets, TTL, counters). Minor additions like atomic save with fsync and environment variable configuration go slightly beyond a minimal spec, but nothing egregious is added."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 80.53,
+  "metadata": {
+    "model": "gemini-2.5-pro",
+    "agent_framework": "gemini-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T23:11:00.972053+00:00",
+    "harness": "mini-redis",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 105.709,
+    "tokens_input": 1604,
+    "tokens_output": 6286,
+    "cost_usd": 0.0649,
+    "exit_code": 0,
+    "notes": ""
+  },
+  "report": "# Scorecard: mini-redis \u2014 gemini-2.5-pro\nDate: 2026-03-11T23:11:00.972053+00:00\nAgent framework: gemini-api\n\n## Total Score: 80.5/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  90.2     35%      32.0\nadversarial                 97.8     18%      17.3\nextension                    0.0     12%       0.0\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                100.0     10%      10.0\nquality                     61.9     10%       6.2\n\n## Notes\n- **functional**: 59/65 tests passing\n- **adversarial**: 45/46 edge cases survived\n- **extension**: 0/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 8/8 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

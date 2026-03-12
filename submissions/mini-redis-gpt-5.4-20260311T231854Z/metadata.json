@@ -1,0 +1,15 @@
+{
+  "model": "gpt-5.4",
+  "agent_framework": "openai-api",
+  "agent_framework_version": "unknown",
+  "scaffolding_config": {},
+  "date": "2026-03-11T23:19:46.985644+00:00",
+  "harness": "mini-redis",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 52.315,
+  "tokens_input": 1503,
+  "tokens_output": 4870,
+  "cost_usd": 0.0768,
+  "exit_code": 0,
+  "notes": ""
+}

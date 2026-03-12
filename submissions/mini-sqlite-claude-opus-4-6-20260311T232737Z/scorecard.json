@@ -1,0 +1,151 @@
+{
+  "harness": "mini-sqlite",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-sqlite-claude-opus-4-6-20260311T232737Z",
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "date": "2026-03-11T23:29:56.925237+00:00",
+  "scores": {
+    "functional": {
+      "score": 88.95,
+      "weight": 0.35454545454545455,
+      "detail": {
+        "total_passed": 56,
+        "total_tests": 65,
+        "tiers": {
+          "tier1": {
+            "passed": 21,
+            "total": 21,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 22,
+            "total": 23,
+            "score": 95.65
+          },
+          "tier3": {
+            "passed": 13,
+            "total": 21,
+            "score": 61.9
+          }
+        }
+      },
+      "notes": "56/65 tests passing"
+    },
+    "adversarial": {
+      "score": 83.33,
+      "weight": 0.17727272727272728,
+      "detail": {
+        "passed": 25,
+        "total": 30,
+        "survival_rate": 83.33,
+        "held_out_passed": 0,
+        "held_out_total": 0,
+        "verified": false
+      },
+      "notes": "25/30 edge cases survived"
+    },
+    "extension": {
+      "score": 0.0,
+      "weight": 0.1181818181818182,
+      "detail": {
+        "passed": 0,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "0/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "select_1k_rows": {
+          "p50": 0.035,
+          "p95": 0.037,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "insert_100_rows": {
+          "p50": 3.293,
+          "p95": 3.591,
+          "target_p95": 5.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "join_1k_rows": {
+          "p50": 1.636,
+          "p95": 1.657,
+          "target_p95": 3.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 71.43,
+      "weight": 0.1,
+      "detail": {
+        "passed": 5,
+        "total": 7
+      },
+      "notes": "5/7 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 58.6,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 78.7,
+          "reasoning": "The implementation has a clear three-layer architecture: StorageEngine handles persistence, Tokenizer/Parser produces ASTs, and Executor processes them. Each layer has well-defined interfaces, though the Executor directly calls storage.get_data() and storage.save() in-line throughout execution methods rather than using a cleaner transactional boundary."
+        },
+        "object_model_abstraction": {
+          "score": 70.7,
+          "reasoning": "The parser produces proper AST nodes as dicts with type tags, expressions are represented as trees (binop, comparison, is_null, etc.), and rows are stored as typed lists with coercion. The row representation using tuple keys (table_alias, col_name) for qualified access is clever, though the mix of dict-based AST nodes without proper classes is a minor weakness."
+        },
+        "naming_consistency": {
+          "score": 75.3,
+          "reasoning": "Naming is largely consistent throughout\u2014exec_* methods for execution, parse_* for parsing, eval_* for expression evaluation. The AST uses consistent 'type' discriminators. Minor inconsistency between column_ref nodes in expressions vs. column references in SELECT columns using slightly different structures."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No tests are present in the provided implementation. The file appears to be just the implementation with no test suite, test file, or even example usage shown."
+        },
+        "scope_discipline": {
+          "score": 68.3,
+          "reasoning": "The implementation covers SELECT with WHERE/JOIN/GROUP BY/ORDER BY/LIMIT, INSERT, UPDATE, DELETE, CREATE TABLE, DROP TABLE, transactions, and aggregate functions\u2014a comprehensive SQL subset. However, the code appears truncated (sort_key function is incomplete), and no sqlite3 import is used appropriately."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 74.31,
+  "metadata": {
+    "model": "claude-opus-4-6",
+    "agent_framework": "claude-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T23:29:56.925237+00:00",
+    "harness": "mini-sqlite",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 139.59,
+    "tokens_input": 1148,
+    "tokens_output": 13221,
+    "cost_usd": 1.0088,
+    "exit_code": 0,
+    "notes": ""
+  },
+  "report": "# Scorecard: mini-sqlite \u2014 claude-opus-4-6\nDate: 2026-03-11T23:29:56.925237+00:00\nAgent framework: claude-api\n\n## Total Score: 74.3/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  89.0     35%      31.5\nadversarial                 83.3     18%      14.8\nextension                    0.0     12%       0.0\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                 71.4     10%       7.1\nquality                     58.6     10%       5.9\n\n## Notes\n- **functional**: 56/65 tests passing\n- **adversarial**: 25/30 edge cases survived\n- **extension**: 0/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 5/7 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

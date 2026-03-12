@@ -1,0 +1,151 @@
+{
+  "harness": "mini-redis",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-redis-gpt-5.4-20260311T231854Z",
+  "model": "gpt-5.4",
+  "agent_framework": "openai-api",
+  "date": "2026-03-11T23:19:46.985644+00:00",
+  "scores": {
+    "functional": {
+      "score": 92.25,
+      "weight": 0.35454545454545455,
+      "detail": {
+        "total_passed": 61,
+        "total_tests": 65,
+        "tiers": {
+          "tier1": {
+            "passed": 15,
+            "total": 17,
+            "score": 88.24
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 23,
+            "score": 91.3
+          },
+          "tier3": {
+            "passed": 25,
+            "total": 25,
+            "score": 100.0
+          }
+        }
+      },
+      "notes": "61/65 tests passing"
+    },
+    "adversarial": {
+      "score": 100.0,
+      "weight": 0.17727272727272728,
+      "detail": {
+        "passed": 46,
+        "total": 46,
+        "survival_rate": 100.0,
+        "held_out_passed": 0,
+        "held_out_total": 0,
+        "verified": false
+      },
+      "notes": "46/46 edge cases survived"
+    },
+    "extension": {
+      "score": 0.0,
+      "weight": 0.1181818181818182,
+      "detail": {
+        "passed": 0,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "0/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "get_10k_keys": {
+          "p50": 0.038,
+          "p95": 0.04,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "lrange_10k_list": {
+          "p50": 0.035,
+          "p95": 0.036,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "hgetall_1k_fields": {
+          "p50": 0.033,
+          "p95": 0.035,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 100.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 8,
+        "total": 8
+      },
+      "notes": "8/8 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 60.28,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 86.0,
+          "reasoning": "RedisStore is cleanly separated from CLI concerns with no printing inside the store; execute_command() acts as a thin dispatcher and main() is minimal. The only minor issue is that formatting helpers like quote_string and format_numbered_list live in the same file rather than being clearly partitioned, but they're not mixed into the store logic."
+        },
+        "object_model_abstraction": {
+          "score": 51.7,
+          "reasoning": "Python native types are used correctly (list for lists, dict for hashes, sorted list for sets) but the internal representation uses a stringly-typed schema with {'type': ..., 'value': ..., 'expire_at': ...} dicts rather than dataclasses or typed containers. Type checking relies on string comparison of the 'type' field rather than isinstance checks."
+        },
+        "naming_consistency": {
+          "score": 86.0,
+          "reasoning": "Naming is consistently snake_case throughout, private methods are prefixed with underscore, and similar operations follow the same pattern (e.g., _require_type, _set_entry). The only minor inconsistency is that the public delete method doesn't follow the Redis 'DEL' naming convention (uses 'delete' vs others like 'set', 'get', 'mset')."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No test file is provided in the implementation \u2014 there are zero tests included in the submission, so this dimension cannot be scored above 0."
+        },
+        "scope_discipline": {
+          "score": 77.7,
+          "reasoning": "All standard Redis commands appear implemented (SET, GET, DEL, EXISTS, MSET, MGET, LPUSH, RPUSH, LPOP, RPOP, LRANGE, HSET, HGET, HDEL, HGETALL, HKEYS, EXPIRE, TTL, PERSIST, SADD, SREM, SMEMBERS, SISMEMBER, INCR, DECR). However, PERSIST and HKEYS are additions beyond a typical minimal spec, and the atomic file save with fsync/directory sync is beyond typical scope without being documented as extra."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 81.46,
+  "metadata": {
+    "model": "gpt-5.4",
+    "agent_framework": "openai-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T23:19:46.985644+00:00",
+    "harness": "mini-redis",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 52.315,
+    "tokens_input": 1503,
+    "tokens_output": 4870,
+    "cost_usd": 0.0768,
+    "exit_code": 0,
+    "notes": ""
+  },
+  "report": "# Scorecard: mini-redis \u2014 gpt-5.4\nDate: 2026-03-11T23:19:46.985644+00:00\nAgent framework: openai-api\n\n## Total Score: 81.5/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  92.2     35%      32.7\nadversarial                100.0     18%      17.7\nextension                    0.0     12%       0.0\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                100.0     10%      10.0\nquality                     60.3     10%       6.0\n\n## Notes\n- **functional**: 61/65 tests passing\n- **adversarial**: 46/46 edge cases survived\n- **extension**: 0/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 8/8 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

@@ -1,0 +1,157 @@
+{
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-git-gpt-5-4-20260311T111728Z",
+  "model": "gpt-5.4",
+  "agent_framework": "openai-api",
+  "date": "2026-03-11T11:19:15.798979+00:00",
+  "scores": {
+    "functional": {
+      "score": 96.84,
+      "weight": 0.3,
+      "detail": {
+        "total_passed": 70,
+        "total_tests": 72,
+        "tiers": {
+          "tier1": {
+            "passed": 34,
+            "total": 34,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 21,
+            "total": 22,
+            "score": 95.45
+          },
+          "tier3": {
+            "passed": 15,
+            "total": 16,
+            "score": 93.75
+          }
+        }
+      },
+      "notes": "70/72 tests passing"
+    },
+    "adversarial": {
+      "score": 87.95,
+      "weight": 0.15,
+      "detail": {
+        "passed": 146,
+        "total": 166,
+        "survival_rate": 87.95,
+        "held_out_passed": 10,
+        "held_out_total": 11,
+        "verified": true
+      },
+      "notes": "146/166 edge cases survived [maintainer-verified]"
+    },
+    "extension": {
+      "score": 25.0,
+      "weight": 0.1,
+      "detail": {
+        "passed": 4,
+        "total": 16,
+        "phase": "live_agent"
+      },
+      "notes": "4/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 63.78,
+      "weight": 0.1,
+      "detail": {
+        "killed": 1298,
+        "survived": 737,
+        "total": 2035,
+        "method": "mutmut"
+      },
+      "notes": "64% mutation kill rate"
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "log_10k_commits": {
+          "p50": 0.506,
+          "p95": 0.506,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "add_100k_files": {
+          "p50": 0.362,
+          "p95": 0.362,
+          "target_p95": 30.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "diff_1k_changed_files": {
+          "p50": 0.366,
+          "p95": 0.366,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "merge_deep_diverge": {
+          "p50": 0.338,
+          "p95": 0.338,
+          "target_p95": 5.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 71.43,
+      "weight": 0.1,
+      "detail": {
+        "passed": 10,
+        "total": 14
+      },
+      "notes": "10/14 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 60.54,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 70.7,
+          "reasoning": "The Repo class provides solid plumbing abstractions for object storage, index management, and ref handling that command handlers use consistently. However, cmd_commit manually constructs commit raw bytes inline rather than calling a dedicated plumbing function, and two standalone functions bypass ObjectStore entirely to read/decompress objects directly."
+        },
+        "object_model_abstraction": {
+          "score": 35.0,
+          "reasoning": "GitObject is a generic container with no type-specific logic; there are no dedicated Blob/Tree/Commit classes with serialization methods. Commit bytes are constructed inline in cmd_commit, tree entries are built via standalone tree_entry(), and SHA1 computation is scattered rather than encapsulated in object types."
+        },
+        "naming_consistency": {
+          "score": 73.0,
+          "reasoning": "The codebase maintains strong consistency in naming object identifiers ('oid'), command function prefixes (cmd_*), and method naming on Repo. A few minor inconsistencies like 'snap' vs 'snapshot' abbreviations and the parallel collect_reachable_* functions with slightly inconsistent names exist but don't significantly impede readability."
+        },
+        "test_quality": {
+          "score": 64.0,
+          "reasoning": "Tests cover a good range of features including add/commit/log/status, branching, checkout, fast-forward merge, conflict merge, diff, reset --hard, stash, and edge cases like empty files, binary data, and filenames with spaces. Tests verify content correctness (file contents, output strings, conflict markers), not just exit codes. However, no tests verify exact SHA1 values, no tests for error conditions (e.g., committing with nothing staged), and object round-trip verification is limited to one basic blob test."
+        },
+        "scope_discipline": {
+          "score": 60.0,
+          "reasoning": "The implementation adds stash, diff, reset, and full remote management infrastructure (including object transfer between local repos) that appear beyond the core requested scope. While these are git-like features, implementing remote push/pull plumbing without being asked represents significant out-of-scope work, and the code appears truncated (cmd_merge is cut off mid-implementation suggesting rushed scope management)."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 79.32,
+  "metadata": {
+    "model": "gpt-5.4",
+    "agent_framework": "openai-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T11:19:15.798979+00:00",
+    "harness": "mini-git",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 107.654,
+    "tokens_input": 1655,
+    "tokens_output": 9876,
+    "cost_usd": 0.1523,
+    "exit_code": 0
+  },
+  "report": "# Scorecard: mini-git \u2014 gpt-5.4\nDate: 2026-03-11T11:19:15.798979+00:00\nAgent framework: openai-api\n\n## Total Score: 79.3/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                  96.8     30%      29.1\nadversarial                 88.0     15%      13.2\nextension                   25.0     10%       2.5\nmutation                    63.8     10%       6.4\nperformance                100.0     15%      15.0\nreliability                 71.4     10%       7.1\nquality                     60.5     10%       6.1\n\n## Notes\n- **functional**: 70/72 tests passing\n- **adversarial**: 146/166 edge cases survived [maintainer-verified]\n- **extension**: 4/16 extension tests passing\n- **mutation**: 64% mutation kill rate\n- **reliability**: 10/14 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

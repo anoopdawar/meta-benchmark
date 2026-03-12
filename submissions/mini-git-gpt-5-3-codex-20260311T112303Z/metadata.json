@@ -1,0 +1,14 @@
+{
+  "model": "gpt-5.3-codex",
+  "agent_framework": "openai-api",
+  "agent_framework_version": "unknown",
+  "scaffolding_config": {},
+  "date": "2026-03-11T11:23:36.170833+00:00",
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 32.869,
+  "tokens_input": 1655,
+  "tokens_output": 2468,
+  "cost_usd": 0.0374,
+  "exit_code": 0
+}

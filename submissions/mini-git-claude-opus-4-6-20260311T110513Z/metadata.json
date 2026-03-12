@@ -1,0 +1,14 @@
+{
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "agent_framework_version": "unknown",
+  "scaffolding_config": {},
+  "date": "2026-03-11T11:08:34.900246+00:00",
+  "harness": "mini-git",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 201.581,
+  "tokens_input": 1822,
+  "tokens_output": 18371,
+  "cost_usd": 1.4052,
+  "exit_code": 0
+}

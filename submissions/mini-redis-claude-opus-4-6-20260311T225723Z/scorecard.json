@@ -1,0 +1,151 @@
+{
+  "harness": "mini-redis",
+  "harness_version": "1.0.0",
+  "submission_id": "mini-redis-claude-opus-4-6-20260311T225723Z",
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "date": "2026-03-11T22:58:26.287491+00:00",
+  "scores": {
+    "functional": {
+      "score": 100.0,
+      "weight": 0.35454545454545455,
+      "detail": {
+        "total_passed": 65,
+        "total_tests": 65,
+        "tiers": {
+          "tier1": {
+            "passed": 17,
+            "total": 17,
+            "score": 100.0
+          },
+          "tier2": {
+            "passed": 23,
+            "total": 23,
+            "score": 100.0
+          },
+          "tier3": {
+            "passed": 25,
+            "total": 25,
+            "score": 100.0
+          }
+        }
+      },
+      "notes": "65/65 tests passing"
+    },
+    "adversarial": {
+      "score": 100.0,
+      "weight": 0.17727272727272728,
+      "detail": {
+        "passed": 46,
+        "total": 46,
+        "survival_rate": 100.0,
+        "held_out_passed": 0,
+        "held_out_total": 0,
+        "verified": false
+      },
+      "notes": "46/46 edge cases survived"
+    },
+    "extension": {
+      "score": 0.0,
+      "weight": 0.1181818181818182,
+      "detail": {
+        "passed": 0,
+        "total": 16,
+        "phase": "static"
+      },
+      "notes": "0/16 extension tests passing"
+    },
+    "mutation": {
+      "score": 0.0,
+      "weight": 0.0,
+      "detail": {
+        "killed": 0,
+        "survived": 0,
+        "total": 0,
+        "method": "unavailable"
+      },
+      "notes": "No test files found in submission workspace."
+    },
+    "performance": {
+      "score": 100.0,
+      "weight": 0.15,
+      "detail": {
+        "get_10k_keys": {
+          "p50": 0.033,
+          "p95": 0.034,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "lrange_10k_list": {
+          "p50": 0.033,
+          "p95": 0.034,
+          "target_p95": 2.0,
+          "score": 100.0,
+          "skipped": false
+        },
+        "hgetall_1k_fields": {
+          "p50": 0.03,
+          "p95": 0.03,
+          "target_p95": 1.0,
+          "score": 100.0,
+          "skipped": false
+        }
+      },
+      "notes": ""
+    },
+    "reliability": {
+      "score": 87.5,
+      "weight": 0.1,
+      "detail": {
+        "passed": 7,
+        "total": 8
+      },
+      "notes": "7/8 reliability scenarios passing"
+    },
+    "quality": {
+      "score": 55.2,
+      "weight": 0.1,
+      "detail": {
+        "plumbing_porcelain_separation": {
+          "score": 78.7,
+          "reasoning": "RedisStore is a clean, independently testable class with no printing inside it; run_command() acts as a thin CLI dispatcher. Minor concern: run_command() creates the store internally rather than accepting it as a dependency, making unit testing slightly harder."
+        },
+        "object_model_abstraction": {
+          "score": 37.3,
+          "reasoning": "The implementation uses the stringly-typed metadata pattern (`{'type': 'string', 'value': ..., 'ttl': None}`) explicitly called out as a 25-point indicator, though Python native types are used for the values themselves (list for list, dict for hash). Sets are stored as lists rather than actual Python sets, which is a notable abstraction weakness. No dataclasses or typed containers are used."
+        },
+        "naming_consistency": {
+          "score": 81.7,
+          "reasoning": "Naming is highly consistent throughout \u2014 snake_case everywhere, private helpers prefixed with underscore, command methods named after Redis commands. The pattern of _check_type + _get_entry is applied uniformly across all command implementations."
+        },
+        "test_quality": {
+          "score": 0.0,
+          "reasoning": "No test file or test suite was provided in the implementation. There are no tests at all to evaluate."
+        },
+        "scope_discipline": {
+          "score": 78.3,
+          "reasoning": "All standard Redis commands appear to be implemented (SET, GET, DEL, EXISTS, MSET, MGET, LPUSH, RPUSH, LPOP, RPOP, LRANGE, HSET, HGET, HDEL, HGETALL, HKEYS, EXPIRE, TTL, PERSIST, SADD, SREM, SMEMBERS, SISMEMBER, INCR, DECR). The fsync-based persistence is a reasonable addition; without a spec it's unclear if PERSIST and HKEYS were explicitly requested."
+        }
+      },
+      "notes": "LLM judge score (models: claude-sonnet-4-6...)"
+    }
+  },
+  "total_score": 82.45,
+  "metadata": {
+    "model": "claude-opus-4-6",
+    "agent_framework": "claude-api",
+    "agent_framework_version": "unknown",
+    "scaffolding_config": {},
+    "date": "2026-03-11T22:58:26.287491+00:00",
+    "harness": "mini-redis",
+    "harness_version": "1.0.0",
+    "wall_clock_seconds": 63.009,
+    "tokens_input": 1707,
+    "tokens_output": 6797,
+    "cost_usd": 0.5354,
+    "exit_code": 0,
+    "notes": ""
+  },
+  "report": "# Scorecard: mini-redis \u2014 claude-opus-4-6\nDate: 2026-03-11T22:58:26.287491+00:00\nAgent framework: claude-api\n\n## Total Score: 82.5/100\n\n## Dimension Scores\n\nDimension                  Score   Weight  Weighted\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 \u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500  \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\nfunctional                 100.0     35%      35.5\nadversarial                100.0     18%      17.7\nextension                    0.0     12%       0.0\nmutation                     0.0      0%       0.0\nperformance                100.0     15%      15.0\nreliability                 87.5     10%       8.8\nquality                     55.2     10%       5.5\n\n## Notes\n- **functional**: 65/65 tests passing\n- **adversarial**: 46/46 edge cases survived\n- **extension**: 0/16 extension tests passing\n- **mutation**: No test files found in submission workspace.\n- **reliability**: 7/8 reliability scenarios passing\n- **quality**: LLM judge score (models: claude-sonnet-4-6...)"
+}

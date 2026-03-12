@@ -1,0 +1,15 @@
+{
+  "model": "claude-opus-4-6",
+  "agent_framework": "claude-api",
+  "agent_framework_version": "unknown",
+  "scaffolding_config": {},
+  "date": "2026-03-11T23:29:56.925237+00:00",
+  "harness": "mini-sqlite",
+  "harness_version": "1.0.0",
+  "wall_clock_seconds": 139.59,
+  "tokens_input": 1148,
+  "tokens_output": 13221,
+  "cost_usd": 1.0088,
+  "exit_code": 0,
+  "notes": ""
+}
