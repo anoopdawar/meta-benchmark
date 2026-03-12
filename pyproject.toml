@@ -1,21 +1,31 @@
 [build-system]
 requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "meta-benchmark"
 version = "0.1.0"
 description = "Community standard harnesses for benchmarking AI coding agents"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+    "pytest-json-report>=1.5",
+]
 
 [project.scripts]
 benchmark = "runner.cli:main"
 
 [project.optional-dependencies]
+anthropic = ["anthropic>=0.39"]
+openai = ["openai>=2.0"]
+gemini = ["google-genai>=1.0"]
+mutation = ["mutmut<3"]
+all = [
+    "meta-benchmark[anthropic,openai,gemini,mutation]",
+]
 dev = [
-    "pytest>=8.0",
-    "pytest-timeout>=2.3",
+    "meta-benchmark[all]",
 ]
 
 [tool.setuptools.packages.find]

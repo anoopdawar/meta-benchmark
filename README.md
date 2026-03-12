@@ -180,8 +180,15 @@ meta-benchmark/
 ```bash
 git clone https://github.com/anoopdawar/meta-benchmark
 cd meta-benchmark
+
+# Core install (scoring infrastructure + pytest)
 pip install -e .
-pip install pytest pytest-timeout pytest-json-report "mutmut<3"
+
+# Add the agents you want to use
+pip install -e ".[anthropic]"    # Claude models
+pip install -e ".[openai]"      # GPT models
+pip install -e ".[gemini]"      # Gemini models
+pip install -e ".[all]"         # everything
 
 # See available harnesses
 python -m runner.cli list-harnesses

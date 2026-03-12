@@ -10,8 +10,14 @@ Everything you need to try the benchmark, step by step.
 git clone https://github.com/anoopdawar/meta-benchmark
 cd meta-benchmark
 
+# Core install (scoring infrastructure + pytest)
 pip install -e .
-pip install pytest pytest-timeout pytest-json-report "mutmut<3"
+
+# Add the agents you need
+pip install -e ".[anthropic]"    # for Claude models
+pip install -e ".[openai]"      # for GPT models
+pip install -e ".[gemini]"      # for Gemini models
+pip install -e ".[all]"         # everything including mutmut
 ```
 
 Check it works:
