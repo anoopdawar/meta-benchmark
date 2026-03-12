@@ -70,21 +70,19 @@ Plus 30 adversarial tests, 16 extension tests, 3 performance benchmarks, 7 relia
 
 ## Scoring
 
-Seven dimensions, all automated. Same framework across all harnesses:
+Seven dimensions, all automated. Same framework across all harnesses. Base weights are defined in `scorer/scorecard.py`:
 
 | Dimension | Weight | How |
 |-----------|--------|-----|
-| Functional completeness | 35% | Behavioral tests across 3 tiers (pytest, black-box) |
-| Adversarial survival | 18% | Public + private held-out edge cases |
-| Extension readiness | 12% | Second-prompt round: agent adds new features. 16 tests. |
-| Mutation kill rate | 0%* | Does the agent's own test suite catch code mutations? (mutmut) |
+| Functional completeness | 30% | Behavioral tests across 3 tiers (pytest, black-box) |
+| Adversarial survival | 15% | Public + private held-out edge cases |
+| Extension readiness | 10% | Second-prompt round: agent adds new features. 16 tests. |
+| Mutation kill rate | 10% | Does the agent's own test suite catch code mutations? (mutmut) |
 | Performance | 15% | Latency benchmarks with defined thresholds |
 | Reliability | 10% | Crash recovery, concurrent writes, disk-full, corruption |
-| Code quality | 10% | Multi-model LLM judge, calibrated against human expert scores |
+| Code quality | 10% | LLM judge panel (Claude, GPT, Gemini — one per provider) |
 
-*Mutation is scored when available but currently weighted at 0% — it's tracked for analysis but doesn't affect the total.
-
-When a dimension is not applicable (e.g. extension tests timeout), its weight is redistributed proportionally across functional, adversarial, and extension — keeping scores on a consistent 0-100 scale.
+**Weight redistribution:** When a dimension can't be scored (e.g. the agent didn't write tests, so mutation is N/A), its weight is redistributed proportionally across functional, adversarial, and extension. In practice, most current runs have mutation=N/A, so their effective weights become ~35/18/12/0/15/10/10. The scorecard JSON records the effective weights used for each run.
 
 **Output:** A structured JSON scorecard + human-readable report. All runs are public.
 
