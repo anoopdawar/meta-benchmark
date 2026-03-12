@@ -9,12 +9,10 @@ A high kill rate means the tests actually verify the implementation's logic.
 
 from __future__ import annotations
 
-import json
 import os
 import shutil
 import subprocess
 import sys
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -33,8 +31,7 @@ class MutationResult:
 def run_mutation(
     submission_path: Path,
     python: str = sys.executable,
-    timeout: int = 600,
-    max_mutations: int = 200,
+    timeout: int = 1200,
 ) -> MutationResult:
     """
     Run mutation testing against the agent's implementation and its own tests.
@@ -61,10 +58,10 @@ def run_mutation(
             notes="mutmut not installed. Run: pip install 'mutmut<3'",
         )
 
-    return _run_mutmut(workspace, python, timeout, max_mutations)
+    return _run_mutmut(workspace, python, timeout)
 
 
-def _run_mutmut(workspace: Path, python: str, timeout: int, max_mutations: int) -> MutationResult:
+def _run_mutmut(workspace: Path, python: str, timeout: int) -> MutationResult:
     """Run mutmut 2.5+ and parse results from mutants/*.meta files."""
     # Find source files (exclude tests)
     src_files = [
@@ -97,7 +94,7 @@ def _run_mutmut(workspace: Path, python: str, timeout: int, max_mutations: int) 
 
     try:
         result = subprocess.run(
-            ["mutmut", "run"],
+            ["mutmut", "run", "--no-progress"],
             cwd=str(workspace),
             capture_output=True,
             text=True,
@@ -132,30 +129,29 @@ def _run_mutmut(workspace: Path, python: str, timeout: int, max_mutations: int) 
 
 def _parse_mutmut_results(workspace: Path) -> tuple[int, int]:
     """
-    Parse mutmut 2.5+ results from mutants/*.meta JSON files.
+    Parse mutmut 2.5 results from .mutmut-cache SQLite database.
 
-    In mutmut 2.5+, each source file gets a .meta file under mutants/ with:
-      exit_code_by_key: {mutant_key: exit_code}
-    exit_code = 1 → test suite caught the mutation (killed ✅)
-    exit_code = 0 → mutation survived (test suite missed it ❌)
+    The Mutant table has a 'status' column:
+      ok_killed    → test suite caught the mutation (killed)
+      bad_survived → mutation survived (test suite missed it)
+      untested     → not tested (skipped)
     """
-    mutants_dir = workspace / "mutants"
-    if not mutants_dir.exists():
+    import sqlite3
+
+    cache = workspace / ".mutmut-cache"
+    if not cache.exists():
         return 0, 0
 
-    killed = 0
-    survived = 0
+    try:
+        conn = sqlite3.connect(str(cache))
+        rows = conn.execute(
+            "SELECT status, count(*) FROM Mutant GROUP BY status"
+        ).fetchall()
+        conn.close()
 
-    for meta_file in mutants_dir.rglob("*.meta"):
-        try:
-            data = json.loads(meta_file.read_text(encoding="utf-8"))
-            exit_codes = data.get("exit_code_by_key", {})
-            for key, code in exit_codes.items():
-                if code != 0:
-                    killed += 1
-                else:
-                    survived += 1
-        except (json.JSONDecodeError, OSError):
-            continue
-
-    return killed, survived
+        counts = dict(rows)
+        killed = counts.get("ok_killed", 0)
+        survived = counts.get("bad_survived", 0)
+        return killed, survived
+    except Exception:
+        return 0, 0

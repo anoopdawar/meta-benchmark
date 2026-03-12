@@ -45,7 +45,7 @@ Output your implementation as a series of files using EXACTLY this format:
 Rules:
 - Output every file needed for a complete, working implementation
 - Prefer a single self-contained file (e.g., mini_git.py) over a package — it's easier to test
-- Do NOT include test files — tests are provided externally
+- Include a test file (e.g., test_mini_redis.py) — your tests will be evaluated separately
 - Include a README.md and requirements.txt
 - Use relative paths (e.g., mini_git.py, not /absolute/path)
 - Do not include any explanation outside the FILE blocks — code only
